@@ -63,6 +63,6 @@ public class ARTSurfaceViewManager extends
 
   @Override
   public void updateExtraData(ARTSurfaceView root, Object extraData) {
-    root.setBitmap((Bitmap) extraData);
+    root.setSurfaceTextureListener((ARTSurfaceViewShadowNode)extraData);
   }
 }
