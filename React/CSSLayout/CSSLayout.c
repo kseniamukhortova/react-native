@@ -988,12 +988,12 @@ static void layoutNodeImpl(CSSNode *node,
       } else if (!isMainAxisRow && isStyleDimDefined(child, CSSFlexDirectionColumn)) {
 
         // The height is definite, so use that as the flex basis.
-        child->layout.flexBasis = fmaxf(child->style.dimensions[CSSDimensionHeight],
-            getPaddingAndBorderAxis(child, CSSFlexDirectionColumn));
-      } else if (!isFlexBasisAuto(child) && !isUndefined(availableInnerMainDim)) {
-
-        // If the basis isn't 'auto', it is assumed to be zero.
-        child->layout.flexBasis = fmaxf(0, getPaddingAndBorderAxis(child, mainAxis));
+        child->layout.computedFlexBasis =
+            fmaxf(child->style.dimensions[CSSDimensionHeight],
+                  getPaddingAndBorderAxis(child, CSSFlexDirectionColumn));
+      } else if (!CSSValueIsUndefined(child->style.flexBasis)) {
+        child->layout.computedFlexBasis =
+            fmaxf(child->style.flexBasis, getPaddingAndBorderAxis(child, mainAxis));
       } else {
 
         // Compute the flex basis and hypothetical main size (i.e. the clamped
