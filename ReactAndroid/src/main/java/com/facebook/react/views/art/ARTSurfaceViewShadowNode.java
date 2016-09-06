@@ -18,6 +18,8 @@ import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.view.TextureView;
 
+import com.facebook.common.logging.FLog;
+import com.facebook.react.common.ReactConstants;
 import com.facebook.react.uimanager.LayoutShadowNode;
 import com.facebook.react.uimanager.UIViewOperationQueue;
 import com.facebook.react.uimanager.ReactShadowNode;
@@ -48,7 +50,7 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
   }
 
   private void drawOutput() {
-    if (mSurface == null) {
+    if (mSurface == null || !mSurface.isValid()) {
       markChildrenUpdatesSeen(this);      
       return;
     }
@@ -63,7 +65,16 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
       child.markUpdateSeen();
     }
 
-    mSurface.unlockCanvasAndPost(canvas);
+    if (mSurface == null) {
+      return;
+    }
+ 
+    try {
+        mSurface.unlockCanvasAndPost(canvas);
+    } catch(IllegalArgumentException e) {
+      FLog.e(ReactConstants.TAG, "IllegalArgumentException in Surface.unlockCanvasAndPost");
+      e.printStackTrace();
+    }
   }
 
   private void markChildrenUpdatesSeen(ReactShadowNode shadowNode) {
@@ -79,6 +90,7 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
   }
 
   public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+      mSurface.release();
       mSurface = null;
       return true;
   }
