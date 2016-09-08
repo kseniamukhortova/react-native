@@ -55,22 +55,22 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
       return;
     }
 
-    Canvas canvas = mSurface.lockCanvas(null);
-    canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-
-    Paint paint = new Paint();
-    for (int i = 0; i < getChildCount(); i++) {
-      ARTVirtualNode child = (ARTVirtualNode) getChildAt(i);
-      child.draw(canvas, paint, 1f);
-      child.markUpdateSeen();
-    }
-
-    if (mSurface == null) {
-      return;
-    }
- 
     try {
-        mSurface.unlockCanvasAndPost(canvas);
+      Canvas canvas = mSurface.lockCanvas(null);
+      canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+      Paint paint = new Paint();
+      for (int i = 0; i < getChildCount(); i++) {
+        ARTVirtualNode child = (ARTVirtualNode) getChildAt(i);
+        child.draw(canvas, paint, 1f);
+        child.markUpdateSeen();
+      }
+
+      if (mSurface == null) {
+        return;
+      }
+    
+      mSurface.unlockCanvasAndPost(canvas);
     } catch(IllegalArgumentException e) {
       FLog.e(ReactConstants.TAG, "IllegalArgumentException in Surface.unlockCanvasAndPost");
       e.printStackTrace();
