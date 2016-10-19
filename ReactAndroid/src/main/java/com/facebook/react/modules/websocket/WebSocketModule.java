@@ -51,6 +51,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
 
   private Map<Integer, WebSocket> mWebSocketConnections = new HashMap<>();
   private ReactContext mReactContext;
+  private static @Nullable OkHttpClient okHttpClient;
 
   public WebSocketModule(ReactApplicationContext context) {
     super(context);
@@ -70,11 +71,14 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void connect(final String url, @Nullable final ReadableArray protocols, @Nullable final ReadableMap headers, final int id) {
-    OkHttpClient client = new OkHttpClient.Builder()
-      .connectTimeout(10, TimeUnit.SECONDS)
-      .writeTimeout(10, TimeUnit.SECONDS)
-      .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
-      .build();
+
+    if (okHttpClient == null) {
+      okHttpClient = new OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
+        .build();
+    }
 
     Request.Builder builder = new Request.Builder()
         .tag(id)
@@ -116,7 +120,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       }
     }
 
-    WebSocketCall.create(client, builder.build()).enqueue(new WebSocketListener() {
+    WebSocketCall.create(okHttpClient, builder.build()).enqueue(new WebSocketListener() {
 
       @Override
       public void onOpen(WebSocket webSocket, Response response) {
@@ -173,9 +177,6 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
         sendEvent("websocketMessage", params);
       }
     });
-
-    // Trigger shutdown of the dispatcher's executor so this process can exit cleanly
-    client.dispatcher().executorService().shutdown();
   }
 
   @ReactMethod
