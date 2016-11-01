@@ -248,6 +248,10 @@ bool layoutNodeInternal(CSSNode *node,
 
 bool isUndefined(float value) { return isnan(value); }
 
+bool CSSValueIsUndefined(const float value) {
+  return isnan(value);
+}
+
 static bool eq(float a, float b) {
   if (isUndefined(a)) {
     return isUndefined(b);

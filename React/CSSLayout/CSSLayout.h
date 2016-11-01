@@ -143,6 +143,8 @@ void CSSNodePrint(CSSNodeRef node, CSSPrintOptions options);
 
 bool isUndefined(float value);
 
+bool CSSValueIsUndefined(const float value);
+
 #define CSS_NODE_PROPERTY(type, name, paramName)                                                   \
   void CSSNodeSet##name(CSSNodeRef node, type paramName);                                          \
   type CSSNodeGet##name(CSSNodeRef node);
