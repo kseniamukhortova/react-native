@@ -182,6 +182,34 @@ public class ARTShapeShadowNode extends ARTVirtualNode {
               (int) (mFillColor[2] * 255),
               (int) (mFillColor[3] * 255));
           break;
+        case 1: // linear gradient
+          if (mFillColor.length < 5) {
+            FLog.w(ReactConstants.TAG, 
+              "[ARTShapeShadowNode setupFillPaint] expects 5 elements, received " 
+              + mFillColor.length);
+            return false;
+          }
+          float x0 = mFillColor[1];
+          float y0 = mFillColor[2];
+          float x1 = mFillColor[3];
+          float y1 = mFillColor[4];
+          int stops = (mFillColor.length - 5) / 5;
+          int[] colors = null;
+          float[] positions = null;
+          if (stops > 0) {
+            colors = new int[stops];
+            positions = new float[stops];
+            for(int i=0; i<stops; i++) {
+              positions[i] = mFillColor[5 + 4*stops + i];
+              int r = (int) (255 * mFillColor[5 + 4*i + 0]);
+              int g = (int) (255 * mFillColor[5 + 4*i + 1]);
+              int b = (int) (255 * mFillColor[5 + 4*i + 2]);
+              int a = (int) (255 * mFillColor[5 + 4*i + 3]);
+              colors[i] = (a << 24) | (r << 16) | (g << 8) | (b << 0);
+            }
+          }
+          paint.setShader(new LinearGradient(x0, y0, x1, y1, colors, positions, Shader.TileMode.CLAMP));
+          break;
         default:
           // TODO(6352048): Support gradients etc.
           FLog.w(ReactConstants.TAG, "ART: Color type " + colorType + " not supported!");
