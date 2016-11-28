@@ -16,6 +16,8 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.DashPathEffect;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
 
 import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.JSApplicationIllegalArgumentException;
