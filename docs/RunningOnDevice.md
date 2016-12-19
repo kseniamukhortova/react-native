@@ -59,7 +59,7 @@ Connect your device to your Mac via USB, then open Xcode. In the project navigat
 
 > If you run into any issues, please take a look at Apple's [Launching Your App on a Device docs](https://developer.apple.com/library/content/documentation/IDEs/Conceptual/AppDistributionGuide/LaunchingYourApponDevices/LaunchingYourApponDevices.html#//apple_ref/doc/uid/TP40012582-CH27-SW4).
 
-Finally, select your phone as the build target and press **Build and run(()).
+Finally, select your phone as the build target and press **Build and run**.
 
 
 <block class="mac windows linux android" />
@@ -148,6 +148,10 @@ $ react-native run-android
 
 > If you get a "bridge configuration isn't available" error, see [Using adb reverse](#using-adb-reverse).
 
+> Hint
+>
+> You can also use the `React Native CLI` to generate and run a `Release` build (e.g. `react-native run-android --configuration Release`).
+
 <block class="mac windows linux android ios" />
 
 ## Connecting to the development server
@@ -205,6 +209,10 @@ You have built a great app using React Native, and you are now itching to releas
 Building an app for distribution in the App Store requires using the `Release` scheme in Xcode. To do this, go to **Product** → **Scheme** → **Edit Scheme (cmd + <)**, make sure you're in the **Run** tab from the side, and set the Build Configuration dropdown to `Release`.
 
 Apps built for `Release` will automatically disable the in-app Developer menu, which will prevent your users from inadvertently accessing the menu in production. It will also load the JavaScript locally, so you can put the app on a device and test whilst not connected to the computer.
+
+> Hint
+>
+> You can also use the `React Native CLI` to perform this operation using the option `--configuration` with the value `Release` (e.g. `react-native run-ios --configuration Release`).
 
 Once built for release, you'll be able to distribute the app to beta testers and submit the app to the App Store.
 

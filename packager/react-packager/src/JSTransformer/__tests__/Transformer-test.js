@@ -27,7 +27,6 @@ const {any} = jasmine;
 describe('Transformer', function() {
   let options, workers, Cache;
   const fileName = '/an/arbitrary/file.js';
-  const transformCacheKey = 'abcdef';
   const transformModulePath = __filename;
 
   beforeEach(function() {
@@ -37,7 +36,7 @@ describe('Transformer', function() {
     fs.writeFileSync.mockClear();
     options = {transformModulePath};
     workerFarm.mockClear();
-    workerFarm.mockImpl((opts, path, methods) => {
+    workerFarm.mockImplementation((opts, path, methods) => {
       const api = workers = {};
       methods.forEach(method => {api[method] = jest.fn();});
       return api;
@@ -48,24 +47,23 @@ describe('Transformer', function() {
     ' and options to the worker farm when transforming', () => {
     const transformOptions = {arbitrary: 'options'};
     const code = 'arbitrary(code)';
-    new Transformer(options).transformFile(fileName, code, transformOptions, transformCacheKey);
+    new Transformer(options).transformFile(fileName, code, transformOptions);
     expect(workers.transformAndExtractDependencies).toBeCalledWith(
       transformModulePath,
       fileName,
       code,
       transformOptions,
-      transformCacheKey,
       any(Function),
     );
   });
 
-  pit('should add file info to parse errors', function() {
+  it('should add file info to parse errors', function() {
     const transformer = new Transformer(options);
     var message = 'message';
     var snippet = 'snippet';
 
-    workers.transformAndExtractDependencies.mockImpl(
-      function(transformPath, filename, code, opts, transfCacheKey, callback) {
+    workers.transformAndExtractDependencies.mockImplementation(
+      function(transformPath, filename, code, opts, callback) {
         var babelError = new SyntaxError(message);
         babelError.type = 'SyntaxError';
         babelError.description = message;
@@ -78,7 +76,7 @@ describe('Transformer', function() {
       },
     );
 
-    return transformer.transformFile(fileName, '', {}, transformCacheKey)
+    return transformer.transformFile(fileName, '', {})
       .catch(function(error) {
         expect(error.type).toEqual('TransformError');
         expect(error.message).toBe('SyntaxError ' + message);
