@@ -64,7 +64,6 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
       for (int i = 0; i < getChildCount(); i++) {
         ARTVirtualNode child = (ARTVirtualNode) getChildAt(i);
         child.draw(canvas, paint, 1f);
-        child.markUpdateSeen();
       }
 
       if (mSurface == null) {
@@ -91,6 +90,9 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
     return true;
   }
 
-  public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
+  public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+    drawOutput();
+  }
+
   public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
 }
