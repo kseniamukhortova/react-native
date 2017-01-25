@@ -69,11 +69,13 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
       if (mSurface == null) {
         return;
       }
-    
+
       mSurface.unlockCanvasAndPost(canvas);
       mHasPendingUpdates = false;
-    } catch(IllegalArgumentException | IllegalStateException | RuntimeException e) {
-      FLog.e(ReactConstants.TAG, e.getClass().getSimpleName() + " in Surface.unlockCanvasAndPost");
+    } catch (IllegalArgumentException | IllegalStateException e) {
+      FLog.e(ReactConstants.TAG, e.getClass().getSimpleName() + " in SurfaceView.drawOutput");
+    } catch (RuntimeException e) {
+      FLog.e(ReactConstants.TAG, e.getClass().getSimpleName() + " in SurfaceView.drawOutput");
     }
   }
 
