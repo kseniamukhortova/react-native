@@ -203,6 +203,10 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
      */
     public ReactWebView(ThemedReactContext reactContext) {
       super(reactContext);
+
+      if (17 <= Build.VERSION.SDK_INT && Build.VERSION.SDK_INT <= 19) {
+        this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+      }
     }
 
     @Override
