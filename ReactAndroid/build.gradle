@@ -27,17 +27,21 @@ task createNativeDepsDirectories {
 }
 
 task downloadBoost(dependsOn: createNativeDepsDirectories, type: Download) {
-    src 'https://github.com/react-native-community/boost-for-react-native/releases/download/v1.57.0-1/boost_1_57_0.tar.gz'
+    // src 'https://github.com/react-native-community/boost-for-react-native/releases/download/v1.57.0-1/boost_1_57_0.tar.gz'
+    // src 'https://downloads.sourceforge.net/project/boost/boost/1.57.0/boost_1_57_0.zip' // doesn't work anymore
+    src 'http://mirror.nienbo.com/boost/boost_1_57_0.zip' // alternative
     onlyIfNewer true
     overwrite false
-    dest new File(downloadsDir, 'boost_1_57_0.tar.gz')
+    // dest new File(downloadsDir, 'boost_1_57_0.tar.gz')
+    dest new File(downloadsDir, 'boost_1_57_0.zip')
 }
 
 task prepareBoost(dependsOn: boostPath ? [] : [downloadBoost], type: Copy) {
-    from boostPath ?: tarTree(resources.gzip(downloadBoost.dest))
+    from boostPath ? boostPath : zipTree(downloadBoost.dest)
+    // from boostPath ?: tarTree(resources.gzip(downloadBoost.dest))
     from 'src/main/jni/third-party/boost/Android.mk'
     include 'boost_1_57_0/boost/**/*.hpp', 'Android.mk'
-    includeEmptyDirs = false
+    // includeEmptyDirs = false
     into "$thirdPartyNdkDir/boost"
 }
 
