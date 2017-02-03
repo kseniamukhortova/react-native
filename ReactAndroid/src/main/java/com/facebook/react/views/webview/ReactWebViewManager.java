@@ -12,6 +12,7 @@ package com.facebook.react.views.webview;
 import javax.annotation.Nullable;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.AssertionError;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,12 +25,16 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
+import android.webkit.ValueCallback;
 
+import com.facebook.common.logging.FLog;
+import com.facebook.react.common.ReactConstants;
 import com.facebook.react.views.webview.events.TopLoadingErrorEvent;
 import com.facebook.react.views.webview.events.TopLoadingFinishEvent;
 import com.facebook.react.views.webview.events.TopLoadingStartEvent;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
@@ -44,7 +49,9 @@ import com.facebook.react.uimanager.annotations.ReactProp;
 import com.facebook.react.uimanager.events.Event;
 import com.facebook.react.uimanager.events.EventDispatcher;
 import android.content.Intent;
+import android.content.ActivityNotFoundException;
 import android.net.Uri;
+import android.app.Activity;
 
 /**
  * Manages instances of {@link WebView}
@@ -87,7 +94,10 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
 
   private WebViewConfig mWebViewConfig;
 
-  private static class ReactWebViewClient extends WebViewClient {
+  private static final int REQUEST_SELECT_FILE = 100;
+  private static final int FILECHOOSER_RESULTCODE = 1;
+
+  private static class ReactWebViewClient extends WebViewClient  {
 
     private boolean mLastLoadFailed = false;
 
@@ -192,9 +202,12 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
    * Subclass of {@link WebView} that implements {@link LifecycleEventListener} interface in order
    * to call {@link WebView#destroy} on activty destroy event and also to clear the client
    */
-  private static class ReactWebView extends WebView implements LifecycleEventListener {
+  private static class ReactWebView extends WebView implements LifecycleEventListener, ActivityEventListener {
     private @Nullable String injectedJS;
 
+    private ValueCallback<Uri> mUploadMessage;
+    private ValueCallback<Uri[]> uploadMessage;
+    private ThemedReactContext mReactContext;
     /**
      * WebView must be created with an context of the current activity
      *
@@ -204,10 +217,46 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
      */
     public ReactWebView(ThemedReactContext reactContext) {
       super(reactContext);
+      mReactContext = reactContext;
 
       if (17 <= Build.VERSION.SDK_INT && Build.VERSION.SDK_INT <= 19) {
         this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
       }
+    }
+
+    public ReactContext getReactContext() {
+      return mReactContext;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+          if (requestCode == REQUEST_SELECT_FILE) {
+              if (uploadMessage == null) {
+                  return;
+              }
+              uploadMessage.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, intent));
+              uploadMessage = null;
+          }
+      } else if (requestCode == FILECHOOSER_RESULTCODE) {
+          if (null == mUploadMessage) {
+              return;
+          }
+          // Use MainActivity.RESULT_OK if you're implementing WebView inside Fragment
+          // Use RESULT_OK only if you're implementing WebView inside an Activity
+          Activity activity = ((ReactContext) getReactContext()).getCurrentActivity();
+          Uri result = intent == null || resultCode != activity.RESULT_OK ? null : intent.getData();
+          mUploadMessage.onReceiveValue(result);
+          mUploadMessage = null;
+      } else {
+          // Toast.makeText(getActivity().getApplicationContext(), "Failed to Upload Image", Toast.LENGTH_LONG).show();
+          FLog.w(ReactConstants.TAG, "Failed to Upload Image");
+      }
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+      // do nothing
     }
 
     @Override
@@ -241,6 +290,76 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
       setWebViewClient(null);
       destroy();
     }
+
+    public void setCustomWebChromeClient() {      
+      setWebChromeClient(new CustomWebChromeClient(this));  
+    }
+
+    public class CustomWebChromeClient extends WebChromeClient {
+      ReactWebView mWebView;
+
+      public CustomWebChromeClient(ReactWebView webView) {
+        super();
+        mWebView = webView;
+      }
+
+      @Override
+      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+        callback.invoke(origin, true, false);
+      }
+
+      // For 3.0+ Devices (Start)
+      // onActivityResult attached before constructor
+      protected void openFileChooser(ValueCallback uploadMsg, String acceptType) {
+          mUploadMessage = uploadMsg;
+          Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+          i.addCategory(Intent.CATEGORY_OPENABLE);
+          i.setType("image/*");
+          tryStartActivityForResult(Intent.createChooser(i, "File Browser"), FILECHOOSER_RESULTCODE);
+      }
+
+      // For Lollipop 5.0+ Devices
+      public boolean onShowFileChooser(WebView mWebView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
+          if (uploadMessage != null) {
+              uploadMessage.onReceiveValue(null);
+              uploadMessage = null;
+          }
+
+          uploadMessage = filePathCallback;
+          Intent intent = fileChooserParams.createIntent();
+          tryStartActivityForResult(intent, REQUEST_SELECT_FILE);
+          return true;
+      }
+
+      //For Android 4.1 only
+      protected void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
+          mUploadMessage = uploadMsg;
+          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+          intent.addCategory(Intent.CATEGORY_OPENABLE);
+          intent.setType("image/*");
+          tryStartActivityForResult(Intent.createChooser(intent, "File Browser"), FILECHOOSER_RESULTCODE);
+      }
+
+      protected void openFileChooser(ValueCallback<Uri> uploadMsg) {
+          mUploadMessage = uploadMsg;
+          Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+          i.addCategory(Intent.CATEGORY_OPENABLE);
+          i.setType("image/*");
+          tryStartActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
+      }
+
+      private boolean tryStartActivityForResult(Intent intent, int code) {
+        try {
+          ReactContext reactContext = ((ReactContext) mWebView.getContext());
+          reactContext.startActivityForResult(intent, code, null);
+        } catch (ActivityNotFoundException | AssertionError e) {
+            uploadMessage = null;
+            FLog.w(ReactConstants.TAG, "Cannot Open File Chooser: " + e.toString());
+            return false;
+        }
+        return true;
+      }
+    }
   }
 
   public ReactWebViewManager() {
@@ -262,14 +381,11 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
   @Override
   protected WebView createViewInstance(ThemedReactContext reactContext) {
     ReactWebView webView = new ReactWebView(reactContext);
-    webView.setWebChromeClient(new WebChromeClient() {
-      @Override
-      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-        callback.invoke(origin, true, false);
-      }
-    });
+    webView.setCustomWebChromeClient();
+    reactContext.addActivityEventListener(webView);
     reactContext.addLifecycleEventListener(webView);
     mWebViewConfig.configWebView(webView);
+    webView.getSettings().setAllowFileAccess(true);
     webView.getSettings().setBuiltInZoomControls(true);
     webView.getSettings().setDisplayZoomControls(false);
 
@@ -410,6 +526,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
   public void onDropViewInstance(WebView webView) {
     super.onDropViewInstance(webView);
     ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((ReactWebView) webView);
+    ((ThemedReactContext) webView.getContext()).removeActivityEventListener((ReactWebView) webView);
     ((ReactWebView) webView).cleanupCallbacksAndDestroy();
   }
 }
