@@ -31,7 +31,6 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
   implements TextureView.SurfaceTextureListener {
 
   private Surface mSurface;
-  private boolean mHasPendingUpdates;
 
   @Override
   public boolean isVirtual() {
@@ -52,7 +51,6 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
 
   private void drawOutput() {
     if (mSurface == null || !mSurface.isValid()) {
-      mHasPendingUpdates = true;
       return;
     }
 
@@ -71,7 +69,6 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
       }
 
       mSurface.unlockCanvasAndPost(canvas);
-      mHasPendingUpdates = false;
     } catch (IllegalArgumentException | IllegalStateException e) {
       FLog.e(ReactConstants.TAG, e.getClass().getSimpleName() + " in SurfaceView.drawOutput");
     } catch (RuntimeException e) {
@@ -81,9 +78,7 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
 
   public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
     mSurface = new Surface(surface);
-    if (mHasPendingUpdates) {
-      drawOutput();
-    }
+    drawOutput();
   }
 
   public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
