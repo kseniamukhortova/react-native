@@ -206,7 +206,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
     private @Nullable String injectedJS;
 
     private ValueCallback<Uri> mUploadMessage;
-    private ValueCallback<Uri[]> uploadMessage;
+    private ValueCallback<Uri[]> mUploadMessages;
     private ThemedReactContext mReactContext;
     /**
      * WebView must be created with an context of the current activity
@@ -232,11 +232,11 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
           if (requestCode == REQUEST_SELECT_FILE) {
-              if (uploadMessage == null) {
+              if (mUploadMessages == null) {
                   return;
               }
-              uploadMessage.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, intent));
-              uploadMessage = null;
+              mUploadMessages.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, intent));
+              mUploadMessages = null;
           }
       } else if (requestCode == FILECHOOSER_RESULTCODE) {
           if (null == mUploadMessage) {
@@ -249,7 +249,6 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
           mUploadMessage.onReceiveValue(result);
           mUploadMessage = null;
       } else {
-          // Toast.makeText(getActivity().getApplicationContext(), "Failed to Upload Image", Toast.LENGTH_LONG).show();
           FLog.w(ReactConstants.TAG, "Failed to Upload Image");
       }
     }
@@ -311,41 +310,41 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
       // For 3.0+ Devices (Start)
       // onActivityResult attached before constructor
       protected void openFileChooser(ValueCallback uploadMsg, String acceptType) {
-          mUploadMessage = uploadMsg;
-          Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-          i.addCategory(Intent.CATEGORY_OPENABLE);
-          i.setType("image/*");
-          tryStartActivityForResult(Intent.createChooser(i, "File Browser"), FILECHOOSER_RESULTCODE);
+        mUploadMessage = uploadMsg;
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("image/*");
+        tryStartActivityForResult(Intent.createChooser(i, "File Browser"), FILECHOOSER_RESULTCODE);
       }
 
       // For Lollipop 5.0+ Devices
       public boolean onShowFileChooser(WebView mWebView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
-          if (uploadMessage != null) {
-              uploadMessage.onReceiveValue(null);
-              uploadMessage = null;
-          }
+        if (mUploadMessages != null) {
+          mUploadMessages.onReceiveValue(null);
+          mUploadMessages = null;
+        }
 
-          uploadMessage = filePathCallback;
-          Intent intent = fileChooserParams.createIntent();
-          tryStartActivityForResult(intent, REQUEST_SELECT_FILE);
-          return true;
+        mUploadMessages = filePathCallback;
+        Intent intent = fileChooserParams.createIntent();
+        tryStartActivityForResult(intent, REQUEST_SELECT_FILE);
+        return true;
       }
 
-      //For Android 4.1 only
+      // For Android 4.1 only
       protected void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
-          mUploadMessage = uploadMsg;
-          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-          intent.addCategory(Intent.CATEGORY_OPENABLE);
-          intent.setType("image/*");
-          tryStartActivityForResult(Intent.createChooser(intent, "File Browser"), FILECHOOSER_RESULTCODE);
+        mUploadMessage = uploadMsg;
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        tryStartActivityForResult(Intent.createChooser(intent, "File Browser"), FILECHOOSER_RESULTCODE);
       }
 
       protected void openFileChooser(ValueCallback<Uri> uploadMsg) {
-          mUploadMessage = uploadMsg;
-          Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-          i.addCategory(Intent.CATEGORY_OPENABLE);
-          i.setType("image/*");
-          tryStartActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
+        mUploadMessage = uploadMsg;
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("image/*");
+        tryStartActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
       }
 
       private boolean tryStartActivityForResult(Intent intent, int code) {
@@ -353,9 +352,9 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
           ReactContext reactContext = ((ReactContext) mWebView.getContext());
           reactContext.startActivityForResult(intent, code, null);
         } catch (ActivityNotFoundException | AssertionError e) {
-            uploadMessage = null;
-            FLog.w(ReactConstants.TAG, "Cannot Open File Chooser: " + e.toString());
-            return false;
+          mUploadMessages = null;
+          FLog.w(ReactConstants.TAG, "Cannot Open File Chooser: " + e.toString());
+          return false;
         }
         return true;
       }
