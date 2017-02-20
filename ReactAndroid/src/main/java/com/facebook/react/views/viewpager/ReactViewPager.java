@@ -180,7 +180,7 @@ public class ReactViewPager extends ViewPager {
 
     boolean isBeingDragged = false;
     try {
-      isBeingDragged = super.onInterceptTouchEvent(ev)
+      isBeingDragged = super.onInterceptTouchEvent(ev);
     } catch (IllegalArgumentException e) {
       e.printStackTrace();
 			return false;
