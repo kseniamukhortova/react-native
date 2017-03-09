@@ -110,7 +110,7 @@ function setUpErrorHandler(): void {
     return;
   }
 
-  function handleError(e, isFatal) {
+  const handleError = (e, isFatal) => {
     try {
       require('ExceptionsManager').handleException(e, isFatal);
     } catch (ee) {
@@ -119,7 +119,7 @@ function setUpErrorHandler(): void {
       /* eslint-enable no-console-disallow */
       throw e;
     }
-  }
+  };
 
   const ErrorUtils = require('ErrorUtils');
   ErrorUtils.setGlobalHandler(handleError);
