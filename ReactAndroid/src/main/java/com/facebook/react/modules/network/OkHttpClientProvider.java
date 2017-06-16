@@ -31,6 +31,7 @@ public class OkHttpClientProvider {
 
   // Centralized OkHttpClient for all networking requests.
   private static @Nullable OkHttpClient sClient;
+  private static @Nullable OkHttpClient sClientForWebSocket;
 
   public static OkHttpClient getOkHttpClient() {
     if (sClient == null) {
@@ -38,14 +39,25 @@ public class OkHttpClientProvider {
     }
     return sClient;
   }
-  
+
   // okhttp3 OkHttpClient is immutable
   // This allows app to init an OkHttpClient with custom settings.
   public static void replaceOkHttpClient(OkHttpClient client) {
     sClient = client;
   }
 
-  public static OkHttpClient createClient() {
+  public static OkHttpClient getOkHttpClientForWebSocket() {
+    if (sClientForWebSocket == null) {
+      sClientForWebSocket = createClientForWebSocket();
+    }
+    return sClientForWebSocket;
+  }
+
+  public static void replaceOkHttpClientForWebSocket(OkHttpClient client) {
+    sClientForWebSocket = client;
+  }
+
+  private static OkHttpClient createClient() {
     // No timeouts by default
     OkHttpClient.Builder client = new OkHttpClient.Builder()
       .connectTimeout(0, TimeUnit.MILLISECONDS)
@@ -84,4 +96,12 @@ public class OkHttpClientProvider {
     return client;
   }
 
+  private static OkHttpClient createClientForWebSocket() {
+    // No timeouts by default
+    return new OkHttpClient.Builder()
+      .connectTimeout(10, TimeUnit.SECONDS)
+      .writeTimeout(10, TimeUnit.SECONDS)
+      .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
+      .build();
+  }  
 }

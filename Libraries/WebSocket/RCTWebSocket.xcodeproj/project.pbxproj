@@ -277,10 +277,7 @@
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				VALIDATE_PRODUCT = YES;
-				WARNING_CFLAGS = (
-					"-Werror",
-					"-Wall",
-				);
+				WARNING_CFLAGS = "";
 			};
 			name = Release;
 		};

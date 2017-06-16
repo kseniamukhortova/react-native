@@ -36,6 +36,7 @@ export type CommandT = {
 };
 
 const documentedCommands = [
+  require('./android/android'),
   require('./server/server'),
   require('./runIOS/runIOS'),
   require('./runAndroid/runAndroid'),
