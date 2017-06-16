@@ -255,6 +255,14 @@ class ClippingRectangle extends React.Component {
   }
 }
 
+function newColor(color) {
+  try {
+    return new Color(color);
+  } catch (e) {
+    throw "new Color threw exception for color " + JSON.stringify(color) + ". Inner exception: " + JSON.stringify(e);
+  }
+}
+
 // Renderables
 
 var SOLID_COLOR = 0;
@@ -263,7 +271,7 @@ var RADIAL_GRADIENT = 2;
 var PATTERN = 3;
 
 function insertColorIntoArray(color, targetArray, atIndex) {
-  var c = new Color(color);
+  var c = newColor(color);
   targetArray[atIndex + 0] = c.red / 255;
   targetArray[atIndex + 1] = c.green / 255;
   targetArray[atIndex + 2] = c.blue / 255;
@@ -354,7 +362,7 @@ function extractBrush(colorOrBrush, props) {
     }
     return colorOrBrush._brush;
   }
-  var c = new Color(colorOrBrush);
+  var c = newColor(colorOrBrush);
   return [SOLID_COLOR, c.red / 255, c.green / 255, c.blue / 255, c.alpha];
 }
 
@@ -362,7 +370,7 @@ function extractColor(color) {
   if (color == null) {
     return null;
   }
-  var c = new Color(color);
+  var c = newColor(color);
   return [c.red / 255, c.green / 255, c.blue / 255, c.alpha];
 }
 

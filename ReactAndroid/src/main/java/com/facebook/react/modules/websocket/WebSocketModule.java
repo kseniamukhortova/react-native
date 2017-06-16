@@ -30,6 +30,7 @@ import com.facebook.react.common.ReactConstants;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.network.ForwardingCookieHandler;
+import com.facebook.react.modules.network.OkHttpClientProvider;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -76,17 +77,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void connect(
-    final String url,
-    @Nullable final ReadableArray protocols,
-    @Nullable final ReadableMap headers,
-    final int id) {
-    OkHttpClient client = new OkHttpClient.Builder()
-      .connectTimeout(10, TimeUnit.SECONDS)
-      .writeTimeout(10, TimeUnit.SECONDS)
-      .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
-      .build();
-
+  public void connect(final String url, @Nullable final ReadableArray protocols, @Nullable final ReadableMap headers, final int id) {
     Request.Builder builder = new Request.Builder()
         .tag(id)
         .url(url);
@@ -132,7 +123,8 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       }
     }
 
-    WebSocketCall.create(client, builder.build()).enqueue(new WebSocketListener() {
+    OkHttpClient okHttpClient = OkHttpClientProvider.getOkHttpClientForWebSocket();
+    WebSocketCall.create(okHttpClient, builder.build()).enqueue(new WebSocketListener() {
 
       @Override
       public void onOpen(WebSocket webSocket, Response response) {
@@ -189,9 +181,6 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
         sendEvent("websocketMessage", params);
       }
     });
-
-    // Trigger shutdown of the dispatcher's executor so this process can exit cleanly
-    client.dispatcher().executorService().shutdown();
   }
 
   @ReactMethod
@@ -218,7 +207,11 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+      return;
+      // throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id
+      //   + (mWebSocketConnections.containsKey(id) ? "Has key in map. " : "No key in map. " )
+      //   + "Message: " + message
+      // );
     }
     try {
       client.sendMessage(RequestBody.create(WebSocket.TEXT, message));
@@ -232,7 +225,11 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+      return;
+      // throw new RuntimeException(
+      //   "Cannot send a message. Unknown WebSocket id " + id
+      //   + (mWebSocketConnections.containsKey(id) ? "Has key in map. " : "No key in map. " )
+      // );
     }
     try {
       client.sendMessage(
@@ -247,7 +244,11 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+      return;
+      // throw new RuntimeException(
+      //   "Cannot send a message. Unknown WebSocket id " + id
+      //   + (mWebSocketConnections.containsKey(id) ? "Has key in map. " : "No key in map. " )
+      // );
     }
     try {
       Buffer buffer = new Buffer();

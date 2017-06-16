@@ -449,6 +449,10 @@ dispatch_queue_t RCTGetUIManagerQueue(void)
       shadowView.size = size;
       needsLayout = YES;
     }
+    if (!CGRectEqualToRect(frame, shadowView.frame)) {
+      shadowView.frame = frame;
+      needsLayout = YES;
+    }
 
     // Trigger re-layout when size flexibility changes, as the root view might grow or
     // shrink in the flexible dimensions.

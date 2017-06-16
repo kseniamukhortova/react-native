@@ -68,6 +68,11 @@ UIManager.takeSnapshot = async function(
  * namespace instead of UIManager, unlike Android.
  */
 if (Platform.OS === 'ios') {
+  // Copied from NativeModules
+  const normalizePrefix = (moduleName: string) => {
+    return moduleName.replace(/^(RCT|RK)/, '');
+  }
+
   Object.keys(UIManager).forEach(viewName => {
     const viewConfig = UIManager[viewName];
     if (viewConfig.Manager) {
