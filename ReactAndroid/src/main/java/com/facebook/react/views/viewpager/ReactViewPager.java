@@ -178,7 +178,15 @@ public class ReactViewPager extends ViewPager {
       return false;
     }
 
-    if (super.onInterceptTouchEvent(ev)) {
+    boolean isBeingDragged = false;
+    try {
+      isBeingDragged = super.onInterceptTouchEvent(ev);
+    } catch (IllegalArgumentException e) {
+      e.printStackTrace();
+			return false;
+    }
+
+    if (isBeingDragged) {
       NativeGestureUtil.notifyNativeGestureStarted(this, ev);
       return true;
     }
