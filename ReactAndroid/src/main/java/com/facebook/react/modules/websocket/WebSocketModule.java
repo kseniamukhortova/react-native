@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 
 import okio.Buffer;
 import okio.ByteString;
+import okhttp3.OkHttpClient;
 
 @ReactModule(name = "WebSocketModule")
 public class WebSocketModule extends ReactContextBaseJavaModule {
