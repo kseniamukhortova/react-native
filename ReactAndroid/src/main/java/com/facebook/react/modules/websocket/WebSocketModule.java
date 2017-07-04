@@ -30,7 +30,6 @@ import com.facebook.react.common.ReactConstants;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.network.ForwardingCookieHandler;
-import com.facebook.react.modules.network.OkHttpClientProvider;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -58,11 +57,24 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
 
   private ReactContext mReactContext;
   private ForwardingCookieHandler mCookieHandler;
+  private @Nullable OkHttpClient sClient;
 
   public WebSocketModule(ReactApplicationContext context) {
     super(context);
     mReactContext = context;
     mCookieHandler = new ForwardingCookieHandler(context);
+  }
+
+  private synchronized OkHttpClient getOkHttpClient() {
+    if (sClient == null) {
+      // No timeouts by default
+      sClient = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
+        .build();
+    }
+    return sClient;
   }
 
   private void sendEvent(String eventName, WritableMap params) {
@@ -127,7 +139,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       }
     }
 
-    OkHttpClient okHttpClient = OkHttpClientProvider.getOkHttpClientForWebSocket();
+    OkHttpClient okHttpClient = getOkHttpClient();
     WebSocketCall.create(okHttpClient, builder.build()).enqueue(new WebSocketListener() {
 
       @Override
