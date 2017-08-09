@@ -49,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 
 import okio.Buffer;
 import okio.ByteString;
-import okhttp3.OkHttpClient;
 
 @ReactModule(name = "WebSocketModule")
 public class WebSocketModule extends ReactContextBaseJavaModule {
@@ -69,7 +68,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
   private synchronized OkHttpClient getOkHttpClient() {
     if (sClient == null) {
       // No timeouts by default
-      sClient = OkHttpClient.Builder()
+      sClient = new OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .writeTimeout(10, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
