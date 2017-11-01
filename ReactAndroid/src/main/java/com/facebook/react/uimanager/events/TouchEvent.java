@@ -79,7 +79,7 @@ public class TouchEvent extends Event<TouchEvent> {
     super.init(viewTag);
 
     SoftAssertions.assertCondition(gestureStartTime != UNSET,
-          "Gesture start time must be initialized");
+        "Gesture start time must be initialized");
     short coalescingKey = 0;
     int action = (motionEventToCopy.getAction() & MotionEvent.ACTION_MASK);
     switch (action) {

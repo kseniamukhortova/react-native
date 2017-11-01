@@ -53,7 +53,7 @@ public class OkHttpClientProvider {
     return sClientForWebSocket;
   }
 
-  private static OkHttpClient createClient() {
+  public static OkHttpClient createClient() {
     // No timeouts by default
     OkHttpClient.Builder client = new OkHttpClient.Builder()
       .connectTimeout(0, TimeUnit.MILLISECONDS)
