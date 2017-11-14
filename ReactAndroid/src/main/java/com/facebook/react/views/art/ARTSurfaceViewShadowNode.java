@@ -8,7 +8,6 @@
 package com.facebook.react.views.art;
 
 import javax.annotation.Nullable;
-
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Color;
@@ -35,7 +34,7 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
   implements TextureView.SurfaceTextureListener, LifecycleEventListener {
 
   private @Nullable Surface mSurface;
-
+  private @Nullable boolean mHasPendingUpdates;
   private @Nullable Integer mBackgroundColor;
 
   @ReactProp(name = ViewProps.BACKGROUND_COLOR, customType = "Color")
@@ -63,7 +62,7 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
 
   private void drawOutput(boolean markAsUpdated) {
     if (mSurface == null || !mSurface.isValid()) {
-      markChildrenUpdatesSeen(this);
+      mHasPendingUpdates = true;
       return;
     }
 
@@ -89,8 +88,11 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
         return;
       }
       mSurface.unlockCanvasAndPost(canvas);
+      mHasPendingUpdates = false;
     } catch (IllegalArgumentException | IllegalStateException e) {
       FLog.e(ReactConstants.TAG, e.getClass().getSimpleName() + " in Surface.unlockCanvasAndPost");
+    } catch (RuntimeException e) {
+      FLog.e(ReactConstants.TAG, e.getClass().getSimpleName() + " in SurfaceView.drawOutput");
     }
   }
 
@@ -141,7 +143,9 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
   @Override
   public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
     mSurface = new Surface(surface);
-    drawOutput(false);
+    if (mHasPendingUpdates) {
+      drawOutput(false);
+    }
   }
 
   @Override
@@ -152,7 +156,9 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
   }
 
   @Override
-  public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
+  public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+    drawOutput();
+  }
 
   @Override
   public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
