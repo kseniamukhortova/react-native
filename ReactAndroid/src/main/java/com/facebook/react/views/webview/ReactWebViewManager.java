@@ -271,7 +271,6 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
       return mReactContext;
     }
 
-    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
       FLog.w(ReactConstants.TAG, "onActivityResult requestCode: " + requestCode + ", resultCode: ", resultCode);
 
