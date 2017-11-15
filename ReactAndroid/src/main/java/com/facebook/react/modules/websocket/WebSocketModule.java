@@ -61,16 +61,18 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     mCookieHandler = new ForwardingCookieHandler(context);
   }
 
-   private synchronized OkHttpClient getOkHttpClient() {
-     if (sClient == null) {
+      private synchronized OkHttpClient getOkHttpClient() {
+     //if (sClient == null) {
        // No timeouts by default
-       sClient = new OkHttpClient.Builder()
+       return
+       //sClient = 
+       new OkHttpClient.Builder()
          .connectTimeout(10, TimeUnit.SECONDS)
          .writeTimeout(10, TimeUnit.SECONDS)
          .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
          .build();
-     }
-     return sClient;
+     //}
+     // return sClient;
    }
 
   private void sendEvent(String eventName, WritableMap params) {
