@@ -161,7 +161,24 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
             }
           }
         }
+        if (!useDefaultIntent && url.contains(partialUrl)) {
+          String partialUrl = "play.google.com/store/apps/details?id=";
+          int pos = url.indexOf(partialUrl) + partialUrl.length();
+          String appId = url.substring(pos);
+          try {
+              // open the google play app
+              Intent intent = new Intent(Intent.ACTION_VIEW);
+              intent.setData(Uri.parse("market://details?id=" + appId));
+              view.getContext().startActivity(intent);
+              return true;  // we overrode the url load
 
+          } catch (ActivityNotFoundException e) {
+              //no google play app, load URL in device browser
+              Uri uri = Uri.parse(url);
+              view.loadUrl("https://play.google.com/store/apps/details?" + uri.getQuery());
+              return false;
+          }
+        }
         if (!useDefaultIntent &&
             (url.startsWith("http://") || url.startsWith("https://") ||
             url.startsWith("file://") || url.equals("about:blank"))) {
