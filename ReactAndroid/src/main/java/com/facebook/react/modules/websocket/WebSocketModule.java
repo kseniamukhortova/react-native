@@ -236,12 +236,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(message);
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(message);
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
@@ -250,12 +251,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(ByteString.decodeBase64(base64String));
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(ByteString.decodeBase64(base64String));
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
@@ -263,12 +265,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(byteString);
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(byteString);
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
@@ -277,12 +280,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(ByteString.EMPTY);
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(ByteString.EMPTY);
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
