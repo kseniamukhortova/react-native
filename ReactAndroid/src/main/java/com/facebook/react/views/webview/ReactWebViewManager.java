@@ -161,8 +161,8 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
             }
           }
         }
+        String partialUrl = "play.google.com/store/apps/details?id=";
         if (!useDefaultIntent && url.contains(partialUrl)) {
-          String partialUrl = "play.google.com/store/apps/details?id=";
           int pos = url.indexOf(partialUrl) + partialUrl.length();
           String appId = url.substring(pos);
           try {
