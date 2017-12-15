@@ -53,12 +53,27 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
 
   private ReactContext mReactContext;
   private ForwardingCookieHandler mCookieHandler;
+  private @Nullable OkHttpClient sClient;
 
   public WebSocketModule(ReactApplicationContext context) {
     super(context);
     mReactContext = context;
     mCookieHandler = new ForwardingCookieHandler(context);
   }
+
+      private synchronized OkHttpClient getOkHttpClient() {
+     //if (sClient == null) {
+       // No timeouts by default
+       return
+       //sClient = 
+       new OkHttpClient.Builder()
+         .connectTimeout(10, TimeUnit.SECONDS)
+         .writeTimeout(10, TimeUnit.SECONDS)
+         .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
+         .build();
+     //}
+     // return sClient;
+   }
 
   private void sendEvent(String eventName, WritableMap params) {
     mReactContext
@@ -85,11 +100,7 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     @Nullable final ReadableArray protocols,
     @Nullable final ReadableMap options,
     final int id) {
-    OkHttpClient client = new OkHttpClient.Builder()
-      .connectTimeout(10, TimeUnit.SECONDS)
-      .writeTimeout(10, TimeUnit.SECONDS)
-      .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
-      .build();
+    OkHttpClient client = getOkHttpClient();
 
     Request.Builder builder = new Request.Builder().tag(id).url(url);
 
@@ -225,12 +236,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(message);
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(message);
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
@@ -239,12 +251,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(ByteString.decodeBase64(base64String));
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(ByteString.decodeBase64(base64String));
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
@@ -252,12 +265,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(byteString);
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(byteString);
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
@@ -266,12 +280,13 @@ public final class WebSocketModule extends ReactContextBaseJavaModule {
     WebSocket client = mWebSocketConnections.get(id);
     if (client == null) {
       // This is a programmer error
-      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
-    }
-    try {
-      client.send(ByteString.EMPTY);
-    } catch (Exception e) {
-      notifyWebSocketFailed(id, e.getMessage());
+      //throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    } else {
+      try {
+        client.send(ByteString.EMPTY);
+      } catch (Exception e) {
+        notifyWebSocketFailed(id, e.getMessage());
+      }
     }
   }
 
