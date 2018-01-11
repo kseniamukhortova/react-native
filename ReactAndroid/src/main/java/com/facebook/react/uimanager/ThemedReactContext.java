@@ -17,6 +17,7 @@ import android.content.Context;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.bridge.ActivityEventListener;
 
 //
 
@@ -47,12 +48,18 @@ public class ThemedReactContext extends ReactContext {
   public void removeLifecycleEventListener(LifecycleEventListener listener) {
     mReactApplicationContext.removeLifecycleEventListener(listener);
   }
-
+  @Override
+  public void addActivityEventListener(ActivityEventListener listener) {
+    mReactApplicationContext.addActivityEventListener(listener);
+  }
+  @Override
+  public void removeActivityEventListener(ActivityEventListener listener) {
+    mReactApplicationContext.removeActivityEventListener(listener);
+  }
   @Override
   public boolean hasCurrentActivity() {
     return mReactApplicationContext.hasCurrentActivity();
   }
-
   @Override
   public @Nullable Activity getCurrentActivity() {
     return mReactApplicationContext.getCurrentActivity();
