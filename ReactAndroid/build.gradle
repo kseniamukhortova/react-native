@@ -134,7 +134,7 @@ task downloadJSCHeaders(type: Download) {
 }
 
 // Create Android.mk library module based on so files from mvn + include headers fetched from webkit.org
-task prepareJSC(dependsOn: dependenciesPath ? [] : [downloadJSCHeaders]) << {
+task prepareJSC(dependsOn: dependenciesPath ? [] : [downloadJSCHeaders]) doLast {
     copy {
         from zipTree(configurations.compile.fileCollection { dep -> dep.name == 'android-jsc' }.singleFile)
         from dependenciesPath ? "$dependenciesPath/jsc-headers" : {downloadJSCHeaders.dest}
