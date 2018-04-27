@@ -235,8 +235,7 @@ static NSAttributedString *removeReactTagFromString(NSAttributedString *string)
 
     [self invalidateContentSize];
   } else if (eventLag > RCTTextUpdateLagWarningThreshold) {
-    RCTLogWarn(@"Native TextInput(%@) is %zd events ahead of JS - try to make your JS faster.", self.text, eventLag);
-  }
+    RCTLogWarn(@"Native TextInput(%@) is %zd events ahead of JS - try to make your JS faster.", self.text, (long)eventLag);  }
 }
 
 #pragma mark - RCTBackedTextInputDelegate
