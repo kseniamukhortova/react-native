@@ -402,6 +402,8 @@ const Text = createReactClass({
      * @platform android
      */
     disabled: PropTypes.bool,
+
+    accessibilityLabel: PropTypes.string,
   },
   getDefaultProps(): Object {
     return {
