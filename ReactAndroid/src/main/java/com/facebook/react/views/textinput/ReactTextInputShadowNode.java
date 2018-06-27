@@ -31,7 +31,6 @@ import com.facebook.yoga.YogaMeasureFunction;
 import com.facebook.yoga.YogaMeasureMode;
 import com.facebook.yoga.YogaMeasureOutput;
 import com.facebook.yoga.YogaNode;
-import <your_own_location_of_Rjava>.R;
 
 import javax.annotation.Nullable;
 // NOTE: This class is not much different from ReactTextInputShadowNode expect in the mechanism of
