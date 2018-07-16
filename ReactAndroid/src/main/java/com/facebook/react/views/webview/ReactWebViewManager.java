@@ -15,7 +15,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ArrayList;
 import java.lang.AssertionError;
 import java.util.HashMap;
@@ -28,6 +32,8 @@ import android.graphics.Bitmap;
 import android.graphics.Picture;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -120,11 +126,16 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
   // state and release page resources (including any running JavaScript).
   protected static final String BLANK_URL = "about:blank";
 
+  public static final int INPUT_FILE_REQUEST_CODE = 1001;
+  public static final String EXTRA_FROM_NOTIFICATION = "EXTRA_FROM_NOTIFICATION";
+
   protected WebViewConfig mWebViewConfig;
   protected @Nullable WebView.PictureListener mPictureListener;
 
   private static final int REQUEST_SELECT_FILE = 100;
   private static final int FILECHOOSER_RESULTCODE = 1;
+  private ValueCallback<Uri[]> mFilePathCallback;
+  private String mCameraPhotoPath;
 
   protected static class ReactWebViewClient extends WebViewClient {
 
@@ -550,7 +561,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  protected WebView createViewInstance(ThemedReactContext reactContext) {
+  protected WebView createViewInstance(final ThemedReactContext reactContext) {
     ReactWebView webView = createReactWebViewInstance(reactContext);
     webView.setWebChromeClient(new WebChromeClient() {
       @Override
@@ -566,9 +577,109 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
       public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
         callback.invoke(origin, true, false);
       }
+
+      private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(
+          Environment.DIRECTORY_PICTURES);
+        File imageFile = new File(
+          storageDir,           /* directory */
+          imageFileName+".jpg"  /* filename */
+        );
+        return imageFile;
+      }
+
+      public boolean onShowFileChooser(
+        WebView webView,
+        ValueCallback<Uri[]> filePathCallback,
+        WebChromeClient.FileChooserParams fileChooserParams) {
+        if(mFilePathCallback != null) {
+          mFilePathCallback.onReceiveValue(null);
+        }
+        mFilePathCallback = filePathCallback;
+
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(reactContext.getCurrentActivity().getPackageManager()) != null) {
+          // Create the File where the photo should go
+          File photoFile = null;
+          try {
+            photoFile = createImageFile();
+            takePictureIntent.putExtra("PhotoPath", mCameraPhotoPath);
+          } catch (IOException ex) {
+            // Error occurred while creating the File
+            FLog.e(ReactConstants.TAG, "Unable to create Image File", ex);
+          }
+
+          // Continue only if the File was successfully created
+          if (photoFile != null) {
+            mCameraPhotoPath = "file:" + photoFile.getAbsolutePath();
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
+              Uri.fromFile(photoFile));
+          } else {
+            takePictureIntent = null;
+          }
+        }
+
+        Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
+        contentSelectionIntent.setType("image/*");
+
+        Intent[] intentArray;
+        if(takePictureIntent != null) {
+          intentArray = new Intent[]{takePictureIntent};
+        } else {
+          intentArray = new Intent[0];
+        }
+
+        Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+        chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
+        chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
+
+        reactContext.getCurrentActivity().startActivityForResult(chooserIntent, INPUT_FILE_REQUEST_CODE);
+
+        return true;
+      }
     });
-    reactContext.addActivityEventListener(webView);
     reactContext.addLifecycleEventListener(webView);
+    reactContext.addActivityEventListener(new ActivityEventListener() {
+      @Override
+      public void onActivityResult (Activity activity, int requestCode, int resultCode, Intent data) {
+        if(requestCode != INPUT_FILE_REQUEST_CODE || mFilePathCallback == null) {
+          return;
+        }
+        Uri[] results = null;
+
+        // Check that the response is a good one
+        if(resultCode == Activity.RESULT_OK) {
+          if(data == null) {
+            // If there is not data, then we may have taken a photo
+            if(mCameraPhotoPath != null) {
+              results = new Uri[]{Uri.parse(mCameraPhotoPath)};
+            }
+          } else {
+            String dataString = data.getDataString();
+            if (dataString != null) {
+              results = new Uri[]{Uri.parse(dataString)};
+            }
+          }
+        }
+
+        if(results == null) {
+          mFilePathCallback.onReceiveValue(new Uri[]{});
+        }
+        else {
+          mFilePathCallback.onReceiveValue(results);
+        }
+        mFilePathCallback = null;
+        return;
+      }
+
+      @Override
+      public void onNewIntent(Intent intent) {}
+    });
     mWebViewConfig.configWebView(webView);
     WebSettings settings = webView.getSettings();
     settings.setBuiltInZoomControls(true);
