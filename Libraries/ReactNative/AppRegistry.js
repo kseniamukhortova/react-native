@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2015-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @providesModule AppRegistry
  * @flow
  * @format
  */
@@ -17,12 +16,8 @@ const ReactNative = require('ReactNative');
 const SceneTracker = require('SceneTracker');
 
 const infoLog = require('infoLog');
-const invariant = require('fbjs/lib/invariant');
+const invariant = require('invariant');
 const renderApplication = require('renderApplication');
-
-// Renderer provider must be supplied by each app. If none, traditional
-// renderApplication() will be used.
-let fabricRendererProvider: ?() => typeof renderApplication = null;
 
 type Task = (taskData: any) => Promise<void>;
 type TaskProvider = () => Task;
@@ -102,19 +97,12 @@ const AppRegistry = {
     runnables[appKey] = {
       componentProvider,
       run: appParameters => {
-        let renderFunc = renderApplication;
-        if (appParameters.fabric) {
-          invariant(
-            fabricRendererProvider != null,
-            'A Fabric renderer provider must be set to render Fabric components',
-          );
-          renderFunc = fabricRendererProvider();
-        }
-        renderFunc(
+        renderApplication(
           componentProviderInstrumentationHook(componentProvider),
           appParameters.initialProps,
           appParameters.rootTag,
           wrapperComponentProvider && wrapperComponentProvider(appParameters),
+          appParameters.fabric,
         );
       },
     };
@@ -248,10 +236,6 @@ const AppRegistry = {
         console.error(reason);
         NativeModules.HeadlessJsTaskSupport.notifyTaskFinished(taskId);
       });
-  },
-
-  setFabricRendererProvider(provider: () => typeof renderApplication): void {
-    fabricRendererProvider = provider;
   },
 };
 

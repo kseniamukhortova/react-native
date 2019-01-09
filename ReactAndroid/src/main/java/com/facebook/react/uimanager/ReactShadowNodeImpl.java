@@ -1,12 +1,10 @@
 /**
- * Copyright (c) 2015-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
 package com.facebook.react.uimanager;
-
-import static java.lang.System.arraycopy;
 
 import com.facebook.infer.annotation.Assertions;
 import com.facebook.react.uimanager.annotations.ReactPropertyHolder;
@@ -21,15 +19,12 @@ import com.facebook.yoga.YogaFlexDirection;
 import com.facebook.yoga.YogaJustify;
 import com.facebook.yoga.YogaMeasureFunction;
 import com.facebook.yoga.YogaNode;
-import com.facebook.yoga.YogaNodeClonedFunction;
 import com.facebook.yoga.YogaOverflow;
 import com.facebook.yoga.YogaPositionType;
 import com.facebook.yoga.YogaValue;
 import com.facebook.yoga.YogaWrap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -59,21 +54,9 @@ import javax.annotation.Nullable;
 public class ReactShadowNodeImpl implements ReactShadowNode<ReactShadowNodeImpl> {
 
   private static final YogaConfig sYogaConfig;
+
   static {
     sYogaConfig = ReactYogaConfigProvider.get();
-    sYogaConfig.setOnNodeCloned(new YogaNodeClonedFunction() {
-      @Override
-      public void onNodeCloned(YogaNode oldYogaNode,
-          YogaNode newYogaNode,
-          YogaNode parent,
-          int childIndex) {
-        ReactShadowNode parentReactShadowNode = (ReactShadowNode) parent.getData();
-        Assertions.assertNotNull(parentReactShadowNode);
-
-        ReactShadowNode newReactShadowNode = (ReactShadowNode) newYogaNode.getData();
-        Assertions.assertNotNull(newReactShadowNode);
-      }
-    });
   }
 
   private int mReactTag;
@@ -94,15 +77,13 @@ public class ReactShadowNodeImpl implements ReactShadowNode<ReactShadowNodeImpl>
   private int mScreenY;
   private int mScreenWidth;
   private int mScreenHeight;
-  private final Spacing mDefaultPadding = new Spacing(0);
+  private final Spacing mDefaultPadding;
   private final float[] mPadding = new float[Spacing.ALL + 1];
   private final boolean[] mPaddingIsPercent = new boolean[Spacing.ALL + 1];
   private YogaNode mYogaNode;
-  private ReactShadowNode mOriginalReactShadowNode = null;
-
-  private @Nullable ReactStylesDiffMap mNewProps;
 
   public ReactShadowNodeImpl() {
+    mDefaultPadding = new Spacing(0);
     if (!isVirtual()) {
       YogaNode node = YogaNodePool.get().acquire();
       mYogaNode = node == null ? new YogaNode(sYogaConfig) : node;
@@ -112,87 +93,6 @@ public class ReactShadowNodeImpl implements ReactShadowNode<ReactShadowNodeImpl>
       mYogaNode = null;
     }
   }
-
-  protected ReactShadowNodeImpl(ReactShadowNodeImpl original) {
-    mReactTag = original.mReactTag;
-    mRootTag = original.mRootTag;
-    mViewClassName = original.mViewClassName;
-    mThemedContext = original.mThemedContext;
-    mShouldNotifyOnLayout = original.mShouldNotifyOnLayout;
-    mNodeUpdated = original.mNodeUpdated;
-    mIsLayoutOnly = original.mIsLayoutOnly;
-    mNativeParent = original.mNativeParent;
-    mScreenX = original.mScreenX;
-    mScreenY = original.mScreenY;
-    mScreenWidth = original.mScreenWidth;
-    mScreenHeight = original.mScreenHeight;
-    arraycopy(original.mPadding, 0, mPadding, 0, original.mPadding.length);
-    arraycopy(original.mPaddingIsPercent, 0, mPaddingIsPercent, 0, original.mPaddingIsPercent.length);
-    mNewProps = null;
-    mParent = null;
-    mOriginalReactShadowNode = original;
-  }
-
-  /**
-   * @return a copy of this object (no including copy of its children or the underlying yogaNode).
-   */
-  protected ReactShadowNodeImpl copy() {
-    return new ReactShadowNodeImpl(this);
-  }
-
-  @Override
-  public ReactShadowNodeImpl mutableCopy() {
-    ReactShadowNodeImpl copy = copy();
-    copy.mYogaNode = mYogaNode;
-    // TODO: T26729293 clone YogaNode instead of reusing the same instance
-    //mYogaNode = original.mYogaNode.clone();
-    copy.mNativeChildren = mNativeChildren == null ? null : new ArrayList<>(mNativeChildren);
-    copy.mTotalNativeChildren = mTotalNativeChildren;
-    copy.mChildren = mChildren == null ? null : new ArrayList<>(mChildren);
-    copy.mYogaNode.setData(this);
-    if (mChildren != null) {
-      for (ReactShadowNode child : mChildren) {
-        if (child.getOriginalReactShadowNode() == null) {
-          child.setOriginalReactShadowNode(child);
-        }
-      }
-    }
-    return copy;
-  }
-
-  @Override
-  public ReactShadowNodeImpl mutableCopyWithNewChildren() {
-    ReactShadowNodeImpl copy = copy();
-    copy.mYogaNode = mYogaNode;
-    // TODO: T26729293 clone YogaNode instead of reusing the same instance
-    //mYogaNode = original.mYogaNode.cloneWithNewChildren();
-    copy.mNativeChildren = null;
-    copy.mChildren = null;
-    copy.mTotalNativeChildren = 0;
-    copy.mYogaNode.setData(this);
-    return copy;
-  }
-
-  @Override
-  public ReactShadowNodeImpl mutableCopyWithNewProps(@Nullable ReactStylesDiffMap newProps) {
-    ReactShadowNodeImpl copy = mutableCopy();
-    if (newProps != null) {
-      copy.updateProperties(newProps);
-      copy.mNewProps = newProps;
-    }
-    return copy;
-  }
-
-  @Override
-  public ReactShadowNodeImpl mutableCopyWithNewChildrenAndProps(@Nullable ReactStylesDiffMap newProps) {
-    ReactShadowNodeImpl copy = mutableCopyWithNewChildren();
-    if (newProps != null) {
-      copy.updateProperties(newProps);
-      copy.mNewProps = newProps;
-    }
-    return copy;
-  }
-
 
   /**
    * Nodes that return {@code true} will be treated as "virtual" nodes. That is, nodes that are not
@@ -292,16 +192,6 @@ public class ReactShadowNodeImpl implements ReactShadowNode<ReactShadowNodeImpl>
                 + "' to a '"
                 + toString()
                 + "')");
-      }
-      // TODO: T26729293 This is a temporary code that will be replaced as part of T26729293.
-      YogaNode parent = childYogaNode.getParent();
-      if (parent != null) {
-        for (int k = 0; k < parent.getChildCount(); k++) {
-          if (parent.getChildAt(k) == childYogaNode) {
-            parent.removeChildAt(k);
-            break;
-          }
-        }
       }
       mYogaNode.addChildAt(childYogaNode, i);
     }
@@ -406,12 +296,6 @@ public class ReactShadowNodeImpl implements ReactShadowNode<ReactShadowNodeImpl>
   @Override
   public void onAfterUpdateTransaction() {
     // no-op
-  }
-
-  @Override
-  @Nullable
-  public ReactStylesDiffMap getNewProps() {
-    return mNewProps;
   }
 
   /**
@@ -1041,17 +925,19 @@ public class ReactShadowNodeImpl implements ReactShadowNode<ReactShadowNodeImpl>
   private void getHierarchyInfoWithIndentation(StringBuilder result, int level) {
     // Spaces and tabs are dropped by IntelliJ logcat integration, so rely on __ instead.
     for (int i = 0; i < level; ++i) {
-      result.append("__");
+      result.append("  ");
     }
 
-    result.append(getClass().getSimpleName()).append(" ").append(getReactTag()).append(" ");
+    result.append("<").append(getClass().getSimpleName()).append(" view='").append(getViewClass())
+      .append("' tag=").append(getReactTag());
     if (mYogaNode != null) {
-      result.append(getScreenX()).append(";").append(getScreenY()).append(";")
-        .append(getLayoutWidth()).append(";").append(getLayoutHeight());
+      result.append(" layout='x:").append(getScreenX())
+        .append(" y:").append(getScreenY()).append(" w:").append(getLayoutWidth()).append(" h:")
+        .append(getLayoutHeight()).append("'");
     } else {
       result.append("(virtual node)");
     }
-    result.append("\n");
+    result.append(">\n");
 
     if (getChildCount() == 0) {
       return;
@@ -1070,19 +956,4 @@ public class ReactShadowNodeImpl implements ReactShadowNode<ReactShadowNodeImpl>
     }
   }
 
-  @Nullable
-  @Override
-  public List<ReactShadowNode> getChildrenList() {
-    return mChildren == null ? null : Collections.<ReactShadowNode>unmodifiableList(mChildren);
-  }
-
-  @Override
-  public ReactShadowNode getOriginalReactShadowNode() {
-    return mOriginalReactShadowNode;
-  }
-
-  @Override
-  public void setOriginalReactShadowNode(ReactShadowNode node) {
-    mOriginalReactShadowNode = node;
-  }
 }

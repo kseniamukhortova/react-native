@@ -1,29 +1,36 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
+ * <p>This source code is licensed under the MIT license found in the LICENSE file in the root
+ * directory of this source tree.
  */
-
 package com.facebook.react.testing;
 
 import android.content.Intent;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;
 import android.view.ViewGroup;
+import com.facebook.react.bridge.JavaScriptExecutorFactory;
 import com.facebook.react.bridge.JavaScriptModule;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.testing.idledetection.IdleWaiter;
+import javax.annotation.Nullable;
 
 /**
  * Base class for instrumentation tests that runs React based application.
  *
- * This is similar to ReactAppInstrumentationTestCase except ReactInstrumentationTest allows
+ * <p>This is similar to ReactAppInstrumentationTestCase except ReactInstrumentationTest allows
  * optional rendering of components. A test case can render no components or render multiple
  * components.
  */
-public abstract class ReactInstrumentationTest extends
-    ActivityInstrumentationTestCase2<ReactAppTestActivity> implements IdleWaiter {
+public abstract class ReactInstrumentationTest
+    extends ActivityInstrumentationTestCase2<ReactAppTestActivity> implements IdleWaiter {
+
+  protected StringRecordingModule mRecordingModule;
+
+  @Nullable protected FabricUIManagerFactory mFabricUIManagerFactory = null;
+
+  @Nullable protected JavaScriptExecutorFactory mJavaScriptExecutorFactory = null;
 
   public ReactInstrumentationTest() {
     super(ReactAppTestActivity.class);
@@ -36,38 +43,14 @@ public abstract class ReactInstrumentationTest extends
     Intent intent = new Intent();
     intent.putExtra(ReactAppTestActivity.EXTRA_IS_FABRIC_TEST, isFabricTest());
     setActivityIntent(intent);
+    mRecordingModule = new StringRecordingModule();
     final ReactAppTestActivity activity = getActivity();
-    try {
-      runTestOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          activity.loadBundle(
-              createReactInstanceSpecForTest(),
-              getBundleName(),
-              getEnableDevSupport());
-        }
-      });
-    } catch (Throwable t) {
-      throw new Exception("Unable to load react bundle " + getBundleName(), t);
-    }
+    activity.loadBundle(createReactInstanceSpecForTest(), getBundleName(), getEnableDevSupport());
   }
 
-  /**
-   * Renders this component within this test's activity
-   */
-  public void renderComponent(final String componentName) throws Exception {
-    final ReactAppTestActivity activity = getActivity();
-    try {
-      runTestOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          activity.renderComponent(componentName, null);
-        }
-      });
-    } catch (Throwable t) {
-      throw new Exception("Unable to render component " + componentName, t);
-    }
-    assertTrue("Layout never occurred!", activity.waitForLayout(5000));
+  /** Renders this component within this test's activity */
+  public void renderComponent(final String componentName) {
+    getActivity().renderComponent(componentName, null);
     waitForBridgeAndUIIdle();
   }
 
@@ -83,8 +66,8 @@ public abstract class ReactInstrumentationTest extends
   }
 
   public <T extends View> T getViewByTestId(String testID) {
-    return (T) ReactTestHelper
-        .getViewWithReactTestId((ViewGroup) getRootView().getParent(), testID);
+    return (T)
+        ReactTestHelper.getViewWithReactTestId((ViewGroup) getRootView().getParent(), testID);
   }
 
   public SingleTouchGestureGenerator createGestureGenerator() {
@@ -111,16 +94,20 @@ public abstract class ReactInstrumentationTest extends
     return getReactContext().getJSModule(jsInterface);
   }
 
-  /**
-   * Override this method to provide extra native modules to be loaded before the app starts
-   */
+  /** Override this method to provide extra native modules to be loaded before the app starts */
   protected ReactInstanceSpecForTest createReactInstanceSpecForTest() {
-    return new ReactInstanceSpecForTest();
+    ReactInstanceSpecForTest reactInstanceSpecForTest =
+        new ReactInstanceSpecForTest().addNativeModule(mRecordingModule);
+    if (mJavaScriptExecutorFactory != null) {
+      reactInstanceSpecForTest.setJavaScriptExecutorFactory(mJavaScriptExecutorFactory);
+    }
+    if (mFabricUIManagerFactory != null) {
+      reactInstanceSpecForTest.setFabricUIManagerFactory(mFabricUIManagerFactory);
+    }
+    return reactInstanceSpecForTest;
   }
 
-  /**
-   * Implement this method to provide the bundle for this test
-   */
+  /** Implement this method to provide the bundle for this test */
   protected abstract String getBundleName();
 
   protected ReactContext getReactContext() {
