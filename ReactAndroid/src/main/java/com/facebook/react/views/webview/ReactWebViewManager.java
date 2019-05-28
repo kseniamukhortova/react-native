@@ -309,7 +309,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
       FLog.w(ReactConstants.TAG, "onActivityResult requestCode: " + requestCode + ", resultCode: ", resultCode);
 
       if (requestCode == REQUEST_SELECT_FILE) {
@@ -324,7 +324,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
         }
         // Use MainActivity.RESULT_OK if you're implementing WebView inside Fragment
         // Use RESULT_OK only if you're implementing WebView inside an Activity
-        Activity activity = ((ReactContext) getReactContext()).getCurrentActivity();
+        // Activity activity = ((ReactContext) getReactContext()).getCurrentActivity();
         Uri result = intent == null || resultCode != activity.RESULT_OK ? null : intent.getData();
         mUploadMessage.onReceiveValue(result);
         mUploadMessage = null;
