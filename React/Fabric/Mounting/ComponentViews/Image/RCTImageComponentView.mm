@@ -7,22 +7,21 @@
 
 #import "RCTImageComponentView.h"
 
+#import <React/RCTImageResponseObserverProxy.h>
+#import <react/components/image/ImageComponentDescriptor.h>
 #import <react/components/image/ImageEventEmitter.h>
 #import <react/components/image/ImageLocalData.h>
 #import <react/components/image/ImageProps.h>
-#import <react/components/image/ImageShadowNode.h>
 #import <react/imagemanager/ImageRequest.h>
-#import <react/imagemanager/ImageResponse.h>
 #import <react/imagemanager/RCTImagePrimitivesConversions.h>
 
 #import "RCTConversions.h"
-#import "MainQueueExecutor.h"
-
-using namespace facebook::react;
 
 @implementation RCTImageComponentView {
   UIImageView *_imageView;
   SharedImageLocalData _imageLocalData;
+  const ImageResponseObserverCoordinator *_coordinator;
+  std::unique_ptr<RCTImageResponseObserverProxy> _imageResponseObserverProxy;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -36,6 +35,8 @@ using namespace facebook::react;
 
     _imageView.contentMode = (UIViewContentMode)RCTResizeModeFromImageResizeMode(defaultProps->resizeMode);
 
+    _imageResponseObserverProxy = std::make_unique<RCTImageResponseObserverProxy>((__bridge void *)self);
+
     self.contentView = _imageView;
   }
 
@@ -44,17 +45,15 @@ using namespace facebook::react;
 
 #pragma mark - RCTComponentViewProtocol
 
-+ (ComponentHandle)componentHandle
++ (ComponentDescriptorProvider)componentDescriptorProvider
 {
-  return ImageShadowNode::Handle();
+  return concreteComponentDescriptorProvider<ImageComponentDescriptor>();
 }
 
-- (void)updateProps:(SharedProps)props oldProps:(SharedProps)oldProps
+- (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &)oldProps
 {
-  const auto &oldImageProps = *std::static_pointer_cast<const ImageProps>(oldProps ?: _props);
+  const auto &oldImageProps = *std::static_pointer_cast<const ImageProps>(_props);
   const auto &newImageProps = *std::static_pointer_cast<const ImageProps>(props);
-
-  [super updateProps:props oldProps:oldProps];
 
   // `resizeMode`
   if (oldImageProps.resizeMode != newImageProps.resizeMode) {
@@ -71,30 +70,74 @@ using namespace facebook::react;
   if (oldImageProps.tintColor != newImageProps.tintColor) {
     _imageView.tintColor = [UIColor colorWithCGColor:newImageProps.tintColor.get()];
   }
+
+  [super updateProps:props oldProps:oldProps];
 }
 
-- (void)updateLocalData:(SharedLocalData)localData
-           oldLocalData:(SharedLocalData)oldLocalData
+- (void)updateLocalData:(SharedLocalData)localData oldLocalData:(SharedLocalData)oldLocalData
 {
-  _imageLocalData = std::static_pointer_cast<const ImageLocalData>(localData);
-  assert(_imageLocalData);
-  auto future = _imageLocalData->getImageRequest().getResponseFuture();
-  future.via(&MainQueueExecutor::instance()).thenValue([self](ImageResponse &&imageResponse) {
-    self.image = (__bridge UIImage *)imageResponse.getImage().get();
-  });
+  auto imageLocalData = std::static_pointer_cast<const ImageLocalData>(localData);
+
+  // This call (setting `coordinator`) must be unconditional (at the same block as setting `LocalData`)
+  // because the setter stores a raw pointer to object that `LocalData` owns.
+  self.coordinator = imageLocalData ? &imageLocalData->getImageRequest().getObserverCoordinator() : nullptr;
+
+  auto previousData = _imageLocalData;
+  _imageLocalData = imageLocalData;
+
+  if (!_imageLocalData) {
+    // This might happen in very rare cases (e.g. inside a subtree inside a node with `display: none`).
+    // That's quite normal.
+    return;
+  }
+
+  bool havePreviousData = previousData != nullptr;
+
+  if (!havePreviousData || _imageLocalData->getImageSource() != previousData->getImageSource()) {
+    // Loading actually starts a little before this, but this is the first time we know
+    // the image is loading and can fire an event from this component
+    std::static_pointer_cast<const ImageEventEmitter>(_eventEmitter)->onLoadStart();
+  }
+}
+
+- (void)setCoordinator:(const ImageResponseObserverCoordinator *)coordinator
+{
+  if (_coordinator) {
+    _coordinator->removeObserver(_imageResponseObserverProxy.get());
+  }
+  _coordinator = coordinator;
+  if (_coordinator != nullptr) {
+    _coordinator->addObserver(_imageResponseObserverProxy.get());
+  }
 }
 
 - (void)prepareForRecycle
 {
   [super prepareForRecycle];
+  self.coordinator = nullptr;
   _imageView.image = nil;
   _imageLocalData.reset();
 }
 
-#pragma mark - Other
-
-- (void)setImage:(UIImage *)image
+- (void)dealloc
 {
+  self.coordinator = nullptr;
+  _imageResponseObserverProxy.reset();
+}
+
+#pragma mark - RCTImageResponseDelegate
+
+- (void)didReceiveImage:(UIImage *)image fromObserver:(void *)observer
+{
+  if (!_eventEmitter) {
+    // Notifications are delivered asynchronously and might arrive after the view is already recycled.
+    // In the future, we should incorporate an `EventEmitter` into a separate object owned by `ImageRequest` or `State`.
+    // See for more info: T46311063.
+    return;
+  }
+
+  std::static_pointer_cast<const ImageEventEmitter>(_eventEmitter)->onLoad();
+
   const auto &imageProps = *std::static_pointer_cast<const ImageProps>(_props);
 
   if (imageProps.tintColor) {
@@ -110,11 +153,31 @@ using namespace facebook::react;
                                   resizingMode:UIImageResizingModeStretch];
   }
 
-  _imageView.image = image;
+  self->_imageView.image = image;
 
   // Apply trilinear filtering to smooth out mis-sized images.
-  _imageView.layer.minificationFilter = kCAFilterTrilinear;
-  _imageView.layer.magnificationFilter = kCAFilterTrilinear;
+  self->_imageView.layer.minificationFilter = kCAFilterTrilinear;
+  self->_imageView.layer.magnificationFilter = kCAFilterTrilinear;
+
+  std::static_pointer_cast<const ImageEventEmitter>(self->_eventEmitter)->onLoadEnd();
+}
+
+- (void)didReceiveProgress:(float)progress fromObserver:(void *)observer
+{
+  if (!_eventEmitter) {
+    return;
+  }
+
+  std::static_pointer_cast<const ImageEventEmitter>(_eventEmitter)->onProgress(progress);
+}
+
+- (void)didReceiveFailureFromObserver:(void *)observer
+{
+  if (!_eventEmitter) {
+    return;
+  }
+
+  std::static_pointer_cast<const ImageEventEmitter>(_eventEmitter)->onError();
 }
 
 @end

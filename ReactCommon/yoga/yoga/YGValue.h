@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the LICENSE
@@ -53,5 +53,31 @@ inline bool operator==(const YGValue& lhs, const YGValue& rhs) {
 inline bool operator!=(const YGValue& lhs, const YGValue& rhs) {
   return !(lhs == rhs);
 }
+
+inline YGValue operator-(const YGValue& value) {
+  return {-value.value, value.unit};
+}
+
+namespace facebook {
+namespace yoga {
+namespace literals {
+
+inline YGValue operator"" _pt(long double value) {
+  return YGValue{static_cast<float>(value), YGUnitPoint};
+}
+inline YGValue operator"" _pt(unsigned long long value) {
+  return operator"" _pt(static_cast<long double>(value));
+}
+
+inline YGValue operator"" _percent(long double value) {
+  return YGValue{static_cast<float>(value), YGUnitPercent};
+}
+inline YGValue operator"" _percent(unsigned long long value) {
+  return operator"" _percent(static_cast<long double>(value));
+}
+
+} // namespace literals
+} // namespace yoga
+} // namespace facebook
 
 #endif

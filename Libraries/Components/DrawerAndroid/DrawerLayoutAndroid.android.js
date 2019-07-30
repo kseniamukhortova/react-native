@@ -10,45 +10,36 @@
 
 'use strict';
 
-const Platform = require('Platform');
-const React = require('React');
-const ReactNative = require('ReactNative');
-const StatusBar = require('StatusBar');
-const StyleSheet = require('StyleSheet');
-const UIManager = require('UIManager');
-const View = require('View');
+const Platform = require('../../Utilities/Platform');
+const React = require('react');
+const ReactNative = require('../../Renderer/shims/ReactNative');
+const StatusBar = require('../StatusBar/StatusBar');
+const StyleSheet = require('../../StyleSheet/StyleSheet');
+const UIManager = require('../../ReactNative/UIManager');
+const View = require('../View/View');
 const nullthrows = require('nullthrows');
 
 const DrawerConsts = UIManager.getViewManagerConfig('AndroidDrawerLayout')
   .Constants;
-
-const dismissKeyboard = require('dismissKeyboard');
-const requireNativeComponent = require('requireNativeComponent');
+const dismissKeyboard = require('../../Utilities/dismissKeyboard');
+import AndroidDrawerLayoutNativeComponent from './AndroidDrawerLayoutNativeComponent';
 
 const DRAWER_STATES = ['Idle', 'Dragging', 'Settling'];
 
-import type {ViewStyleProp} from 'StyleSheet';
-import type {ColorValue} from 'StyleSheetTypes';
-import type {SyntheticEvent} from 'CoreEventTypes';
+import type {ViewStyleProp} from '../../StyleSheet/StyleSheet';
+import type {ColorValue} from '../../StyleSheet/StyleSheetTypes';
+import type {DirectEventHandler} from '../../Types/CodegenTypes';
 import type {
   MeasureOnSuccessCallback,
   MeasureInWindowOnSuccessCallback,
   MeasureLayoutOnSuccessCallback,
-} from 'ReactNativeTypes';
+} from '../../Renderer/shims/ReactNativeTypes';
 
 type DrawerStates = 'Idle' | 'Dragging' | 'Settling';
 
-type DrawerStateEvent = SyntheticEvent<
-  $ReadOnly<{|
-    drawerState: number,
-  |}>,
->;
-
-type DrawerSlideEvent = SyntheticEvent<
-  $ReadOnly<{|
-    offset: number,
-  |}>,
->;
+type DrawerSlideEvent = $ReadOnly<{|
+  offset: number,
+|}>;
 
 type Props = $ReadOnly<{|
   /**
@@ -94,7 +85,7 @@ type Props = $ReadOnly<{|
   /**
    * Function called whenever there is an interaction with the navigation view.
    */
-  onDrawerSlide?: ?(event: DrawerSlideEvent) => mixed,
+  onDrawerSlide?: ?DirectEventHandler<DrawerSlideEvent>,
 
   /**
    * Function called when the drawer state has changed. The drawer can be in 3 states:
@@ -131,22 +122,9 @@ type Props = $ReadOnly<{|
   style?: ?ViewStyleProp,
 |}>;
 
-type NativeProps = $ReadOnly<{|
-  ...$Diff<
-    Props,
-    $ReadOnly<{onDrawerStateChanged?: ?(state: DrawerStates) => mixed}>,
-  >,
-  onDrawerStateChanged?: ?(state: DrawerStateEvent) => mixed,
-|}>;
-
 type State = {|
   statusBarBackgroundColor: ColorValue,
 |};
-
-// The View that contains both the actual drawer and the main view
-const AndroidDrawerLayout = ((requireNativeComponent(
-  'AndroidDrawerLayout',
-): any): Class<ReactNative.NativeComponent<NativeProps>>);
 
 /**
  * React component that wraps the platform `DrawerLayout` (Android only). The
@@ -185,14 +163,18 @@ class DrawerLayoutAndroid extends React.Component<Props, State> {
     drawerBackgroundColor: 'white',
   };
 
-  _nativeRef = React.createRef<
-    Class<ReactNative.NativeComponent<NativeProps>>,
-  >();
+  _nativeRef = React.createRef<Class<ReactNative.NativeComponent<Props>>>();
 
   state = {statusBarBackgroundColor: null};
 
   render() {
-    const {onDrawerStateChanged, ...props} = this.props;
+    const {
+      onDrawerStateChanged,
+      renderNavigationView,
+      onDrawerOpen,
+      onDrawerClose,
+      ...props
+    } = this.props;
     const drawStatusBar =
       Platform.Version >= 21 && this.props.statusBarBackgroundColor;
     const drawerViewWrapper = (
@@ -205,7 +187,7 @@ class DrawerLayoutAndroid extends React.Component<Props, State> {
           },
         ]}
         collapsable={false}>
-        {this.props.renderNavigationView()}
+        {renderNavigationView()}
         {drawStatusBar && <View style={styles.drawerStatusBar} />}
       </View>
     );
@@ -229,7 +211,7 @@ class DrawerLayoutAndroid extends React.Component<Props, State> {
       </View>
     );
     return (
-      <AndroidDrawerLayout
+      <AndroidDrawerLayoutNativeComponent
         {...props}
         /* $FlowFixMe(>=0.87.0 site=react_native_android_fb) This comment
          * suppresses an error found when Flow v0.87 was deployed. To see the
@@ -245,11 +227,11 @@ class DrawerLayoutAndroid extends React.Component<Props, State> {
         onDrawerStateChanged={this._onDrawerStateChanged}>
         {childrenWrapper}
         {drawerViewWrapper}
-      </AndroidDrawerLayout>
+      </AndroidDrawerLayoutNativeComponent>
     );
   }
 
-  _onDrawerSlide = (event: DrawerSlideEvent) => {
+  _onDrawerSlide = event => {
     if (this.props.onDrawerSlide) {
       this.props.onDrawerSlide(event);
     }
@@ -270,7 +252,7 @@ class DrawerLayoutAndroid extends React.Component<Props, State> {
     }
   };
 
-  _onDrawerStateChanged = (event: DrawerStateEvent) => {
+  _onDrawerStateChanged = event => {
     if (this.props.onDrawerStateChanged) {
       this.props.onDrawerStateChanged(
         DRAWER_STATES[event.nativeEvent.drawerState],
@@ -303,7 +285,10 @@ class DrawerLayoutAndroid extends React.Component<Props, State> {
 
   /**
    * Closing and opening example
-   * Note: To access the drawer you have to give it a ref. Refs do not work on stateless components
+   * Note: To access the drawer you have to give it a ref
+   *
+   * Class component:
+   *
    * render () {
    *   this.openDrawer = () => {
    *     this.refs.DRAWER.openDrawer()
@@ -313,9 +298,25 @@ class DrawerLayoutAndroid extends React.Component<Props, State> {
    *   }
    *   return (
    *     <DrawerLayoutAndroid ref={'DRAWER'}>
+   *      {children}
    *     </DrawerLayoutAndroid>
    *   )
    * }
+   *
+   * Function component:
+   *
+   * const drawerRef = useRef()
+   * const openDrawer = () => {
+   *   drawerRef.current.openDrawer()
+   * }
+   * const closeDrawer = () => {
+   *   drawerRef.current.closeDrawer()
+   * }
+   * return (
+   *   <DrawerLayoutAndroid ref={drawerRef}>
+   *     {children}
+   *   </DrawerLayoutAndroid>
+   * )
    */
   _getDrawerLayoutHandle() {
     return ReactNative.findNodeHandle(this._nativeRef.current);

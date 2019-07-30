@@ -5,18 +5,19 @@
 
 #include <folly/dynamic.h>
 #include <react/attributedstring/conversions.h>
-#include <react/components/text/ParagraphLocalData.h>
+#include <react/components/text/ParagraphState.h>
 
 namespace facebook {
 namespace react {
 
-inline folly::dynamic toDynamic(const ParagraphLocalData &paragraphLocalData) {
-  folly::dynamic newLocalData = folly::dynamic::object();
-  newLocalData["attributedString"] =
-      toDynamic(paragraphLocalData.getAttributedString());
-  newLocalData["hash"] = newLocalData["attributedString"]["hash"];
-  return newLocalData;
+#ifdef ANDROID
+inline folly::dynamic toDynamic(ParagraphState const &paragraphState) {
+  folly::dynamic newState = folly::dynamic::object();
+  newState["attributedString"] = toDynamic(paragraphState.attributedString);
+  newState["hash"] = newState["attributedString"]["hash"];
+  return newState;
 }
+#endif
 
 } // namespace react
 } // namespace facebook

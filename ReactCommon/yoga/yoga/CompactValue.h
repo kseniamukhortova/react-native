@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the LICENSE
@@ -70,7 +70,8 @@ public:
 
   template <YGUnit Unit>
   static CompactValue ofMaybe(float value) noexcept {
-    return std::isnan(value) ? ofUndefined() : of<Unit>(value);
+    return std::isnan(value) || std::isinf(value) ? ofUndefined()
+                                                  : of<Unit>(value);
   }
 
   static constexpr CompactValue ofZero() noexcept {
@@ -133,9 +134,7 @@ public:
         payload_.repr != ZERO_BITS_PERCENT && std::isnan(payload_.value));
   }
 
-  bool isAuto() const noexcept {
-    return payload_.repr == AUTO_BITS;
-  }
+  bool isAuto() const noexcept { return payload_.repr == AUTO_BITS; }
 
 private:
   union Payload {
@@ -149,8 +148,8 @@ private:
   static constexpr uint32_t BIAS = 0x20000000;
   static constexpr uint32_t PERCENT_BIT = 0x40000000;
 
-  // these are signaling NaNs with specific bit pattern as payload
-  // they will be silenced whenever going through an FPU operation on ARM + x86
+  // these are signaling NaNs with specific bit pattern as payload they will be
+  // silenced whenever going through an FPU operation on ARM + x86
   static constexpr uint32_t AUTO_BITS = 0x7faaaaaa;
   static constexpr uint32_t ZERO_BITS_POINT = 0x7f8f0f0f;
   static constexpr uint32_t ZERO_BITS_PERCENT = 0x7f80f0f0;
@@ -159,9 +158,7 @@ private:
 
   Payload payload_;
 
-  VISIBLE_FOR_TESTING uint32_t repr() {
-    return payload_.repr;
-  }
+  VISIBLE_FOR_TESTING uint32_t repr() { return payload_.repr; }
 };
 
 template <>

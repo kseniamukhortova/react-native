@@ -74,6 +74,17 @@ RCT_EXTERN void RCTRegisterModule(Class); \
 + (void)load { RCTRegisterModule(self); }
 
 /**
+ * Same as RCT_EXPORT_MODULE, but uses __attribute__((constructor)) for module
+ * registration. Useful for registering swift classes that forbids use of load
+ * Used in RCT_EXTERN_REMAP_MODULE
+ */
+#define RCT_EXPORT_MODULE_NO_LOAD(js_name, objc_name) \
+RCT_EXTERN void RCTRegisterModule(Class); \
++ (NSString *)moduleName { return @#js_name; } \
+__attribute__((constructor)) static void \
+RCT_CONCAT(initialize_, objc_name)() { RCTRegisterModule([objc_name class]); }
+
+/**
  * To improve startup performance users may want to generate their module lists
  * at build time and hook the delegate to merge with the runtime list. This
  * macro takes the place of the above for those cases by omitting the +load
@@ -250,7 +261,7 @@ RCT_EXTERN void RCTRegisterModule(Class); \
   @interface objc_name (RCTExternModule) <RCTBridgeModule> \
   @end \
   @implementation objc_name (RCTExternModule) \
-  RCT_EXPORT_MODULE(js_name)
+  RCT_EXPORT_MODULE_NO_LOAD(js_name, objc_name)
 
 /**
  * Use this macro in accordance with RCT_EXTERN_MODULE to export methods
@@ -280,7 +291,7 @@ RCT_EXTERN void RCTRegisterModule(Class); \
  * Most modules can be used from any thread. All of the modules exported non-sync method will be called on its
  * methodQueue, and the module will be constructed lazily when its first invoked. Some modules have main need to access
  * information that's main queue only (e.g. most UIKit classes). Since we don't want to dispatch synchronously to the
- * main thread to this safely, we construct these moduels and export their constants ahead-of-time.
+ * main thread to this safely, we construct these modules and export their constants ahead-of-time.
  *
  * Note that when set to false, the module constructor will be called from any thread.
  *
@@ -323,10 +334,29 @@ RCT_EXTERN void RCTRegisterModule(Class); \
 @end
 
 /**
+ * A protocol that allows TurboModules to do lookup on other TurboModules.
+ * Calling these methods may cause a module to be synchronously instantiated.
+ */
+ @protocol RCTTurboModuleLookupDelegate <NSObject>
+ - (id)moduleForName:(const char *)moduleName;
+
+ /**
+  * Rationale:
+  * When TurboModules lookup other modules by name, we first check the TurboModule
+  * registry to see if a TurboModule exists with the respective name. In this case,
+  * we don't want a RedBox to be raised if the TurboModule isn't found.
+  *
+  * This method is deprecated and will be deleted after the migration from
+  * TurboModules to TurboModules is complete.
+  */
+ - (id)moduleForName:(const char *)moduleName warnOnLookupFailure:(BOOL)warnOnLookupFailure;
+ - (BOOL)moduleIsInitialized:(const char *)moduleName;
+ @end
+
+/**
  * Experimental.
  * A protocol to declare that a class supports TurboModule.
  * This may be removed in the future.
+ * See RCTTurboModule.h for actual signature.
  */
-@protocol RCTTurboModule <NSObject>
-
-@end
+@protocol RCTTurboModule;

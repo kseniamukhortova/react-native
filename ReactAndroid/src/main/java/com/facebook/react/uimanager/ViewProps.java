@@ -1,10 +1,9 @@
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
+ * <p>This source code is licensed under the MIT license found in the LICENSE file in the root
+ * directory of this source tree.
  */
-
 package com.facebook.react.uimanager;
 
 import android.graphics.Color;
@@ -12,9 +11,7 @@ import com.facebook.react.bridge.ReadableMap;
 import java.util.Arrays;
 import java.util.HashSet;
 
-/**
- * Keys for props that need to be shared across multiple classes.
- */
+/** Keys for props that need to be shared across multiple classes. */
 public class ViewProps {
 
   public static final String VIEW_CLASS_NAME = "RCTView";
@@ -106,6 +103,7 @@ public class ViewProps {
   public static final String VISIBLE = "visible";
 
   public static final String ALLOW_FONT_SCALING = "allowFontScaling";
+  public static final String MAX_FONT_SIZE_MULTIPLIER = "maxFontSizeMultiplier";
   public static final String INCLUDE_FONT_PADDING = "includeFontPadding";
 
   public static final String BORDER_WIDTH = "borderWidth";
@@ -230,19 +228,21 @@ public class ViewProps {
           return false;
         }
         if (map.hasKey(BORDER_WIDTH)
-          && !map.isNull(BORDER_WIDTH)
-          && map.getDouble(BORDER_WIDTH) != 0d) {
+            && !map.isNull(BORDER_WIDTH)
+            && map.getDouble(BORDER_WIDTH) != 0d) {
           return false;
         }
         return true;
       case BORDER_LEFT_COLOR:
-        return map.getInt(BORDER_LEFT_COLOR) == Color.TRANSPARENT;
+        return !map.isNull(BORDER_LEFT_COLOR) && map.getInt(BORDER_LEFT_COLOR) == Color.TRANSPARENT;
       case BORDER_RIGHT_COLOR:
-        return map.getInt(BORDER_RIGHT_COLOR) == Color.TRANSPARENT;
+        return !map.isNull(BORDER_RIGHT_COLOR)
+            && map.getInt(BORDER_RIGHT_COLOR) == Color.TRANSPARENT;
       case BORDER_TOP_COLOR:
-        return map.getInt(BORDER_TOP_COLOR) == Color.TRANSPARENT;
+        return !map.isNull(BORDER_TOP_COLOR) && map.getInt(BORDER_TOP_COLOR) == Color.TRANSPARENT;
       case BORDER_BOTTOM_COLOR:
-        return map.getInt(BORDER_BOTTOM_COLOR) == Color.TRANSPARENT;
+        return !map.isNull(BORDER_BOTTOM_COLOR)
+            && map.getInt(BORDER_BOTTOM_COLOR) == Color.TRANSPARENT;
       case BORDER_WIDTH:
         return map.isNull(BORDER_WIDTH) || map.getDouble(BORDER_WIDTH) == 0d;
       case BORDER_LEFT_WIDTH:
@@ -257,6 +257,6 @@ public class ViewProps {
         return map.isNull(OVERFLOW) || VISIBLE.equals(map.getString(OVERFLOW));
       default:
         return false;
-      }
+    }
   }
 }

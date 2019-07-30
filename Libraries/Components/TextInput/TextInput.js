@@ -9,31 +9,31 @@
  */
 'use strict';
 
-const DeprecatedColorPropType = require('DeprecatedColorPropType');
-const DeprecatedViewPropTypes = require('DeprecatedViewPropTypes');
-const DocumentSelectionState = require('DocumentSelectionState');
-const NativeMethodsMixin = require('NativeMethodsMixin');
-const Platform = require('Platform');
+const DeprecatedColorPropType = require('../../DeprecatedPropTypes/DeprecatedColorPropType');
+const DeprecatedViewPropTypes = require('../../DeprecatedPropTypes/DeprecatedViewPropTypes');
+const DocumentSelectionState = require('../../vendor/document/selection/DocumentSelectionState');
+const NativeMethodsMixin = require('../../Renderer/shims/NativeMethodsMixin');
+const Platform = require('../../Utilities/Platform');
 const PropTypes = require('prop-types');
-const React = require('React');
-const ReactNative = require('ReactNative');
-const StyleSheet = require('StyleSheet');
-const Text = require('Text');
-const TextAncestor = require('TextAncestor');
-const TextInputState = require('TextInputState');
-const TouchableWithoutFeedback = require('TouchableWithoutFeedback');
-const UIManager = require('UIManager');
+const React = require('react');
+const ReactNative = require('../../Renderer/shims/ReactNative');
+const StyleSheet = require('../../StyleSheet/StyleSheet');
+const Text = require('../../Text/Text');
+const TextAncestor = require('../../Text/TextAncestor');
+const TextInputState = require('./TextInputState');
+const TouchableWithoutFeedback = require('../Touchable/TouchableWithoutFeedback');
+const UIManager = require('../../ReactNative/UIManager');
 
 const createReactClass = require('create-react-class');
 const invariant = require('invariant');
-const requireNativeComponent = require('requireNativeComponent');
+const requireNativeComponent = require('../../ReactNative/requireNativeComponent');
 const warning = require('fbjs/lib/warning');
 
-import type {TextStyleProp, ViewStyleProp} from 'StyleSheet';
-import type {ColorValue} from 'StyleSheetTypes';
-import type {ViewProps} from 'ViewPropTypes';
-import type {SyntheticEvent, ScrollEvent} from 'CoreEventTypes';
-import type {PressEvent} from 'CoreEventTypes';
+import type {TextStyleProp, ViewStyleProp} from '../../StyleSheet/StyleSheet';
+import type {ColorValue} from '../../StyleSheet/StyleSheetTypes';
+import type {ViewProps} from '../View/ViewPropTypes';
+import type {SyntheticEvent, ScrollEvent} from '../../Types/CoreEventTypes';
+import type {PressEvent} from '../../Types/CoreEventTypes';
 
 let AndroidTextInput;
 let RCTMultilineTextInputView;
@@ -178,6 +178,38 @@ export type ReturnKeyType =
 
 export type AutoCapitalize = 'none' | 'sentences' | 'words' | 'characters';
 
+export type TextContentType =
+  | 'none'
+  | 'URL'
+  | 'addressCity'
+  | 'addressCityAndState'
+  | 'addressState'
+  | 'countryName'
+  | 'creditCardNumber'
+  | 'emailAddress'
+  | 'familyName'
+  | 'fullStreetAddress'
+  | 'givenName'
+  | 'jobTitle'
+  | 'location'
+  | 'middleName'
+  | 'name'
+  | 'namePrefix'
+  | 'nameSuffix'
+  | 'nickname'
+  | 'organizationName'
+  | 'postalCode'
+  | 'streetAddressLine1'
+  | 'streetAddressLine2'
+  | 'sublocality'
+  | 'telephoneNumber'
+  | 'username'
+  | 'password'
+  | 'newPassword'
+  | 'oneTimeCode';
+
+type PasswordRules = string;
+
 type IOSProps = $ReadOnly<{|
   spellCheck?: ?boolean,
   keyboardAppearance?: ?('default' | 'light' | 'dark'),
@@ -189,40 +221,27 @@ type IOSProps = $ReadOnly<{|
     | ?DataDetectorTypesType
     | $ReadOnlyArray<DataDetectorTypesType>,
   inputAccessoryViewID?: ?string,
-  textContentType?: ?(
-    | 'none'
-    | 'URL'
-    | 'addressCity'
-    | 'addressCityAndState'
-    | 'addressState'
-    | 'countryName'
-    | 'creditCardNumber'
-    | 'emailAddress'
-    | 'familyName'
-    | 'fullStreetAddress'
-    | 'givenName'
-    | 'jobTitle'
-    | 'location'
-    | 'middleName'
-    | 'name'
-    | 'namePrefix'
-    | 'nameSuffix'
-    | 'nickname'
-    | 'organizationName'
-    | 'postalCode'
-    | 'streetAddressLine1'
-    | 'streetAddressLine2'
-    | 'sublocality'
-    | 'telephoneNumber'
-    | 'username'
-    | 'password'
-    | 'newPassword'
-    | 'oneTimeCode'
-  ),
+  textContentType?: ?TextContentType,
+  PasswordRules?: ?PasswordRules,
   scrollEnabled?: ?boolean,
 |}>;
 
 type AndroidProps = $ReadOnly<{|
+  autoCompleteType?: ?(
+    | 'cc-csc'
+    | 'cc-exp'
+    | 'cc-exp-month'
+    | 'cc-exp-year'
+    | 'cc-number'
+    | 'email'
+    | 'name'
+    | 'password'
+    | 'postal-code'
+    | 'street-address'
+    | 'tel'
+    | 'username'
+    | 'off'
+  ),
   returnKeyLabel?: ?string,
   numberOfLines?: ?number,
   disableFullscreenUI?: ?boolean,
@@ -230,6 +249,14 @@ type AndroidProps = $ReadOnly<{|
   underlineColorAndroid?: ?ColorValue,
   inlineImageLeft?: ?string,
   inlineImagePadding?: ?number,
+  importantForAutofill?: ?(
+    | 'auto'
+    | 'no'
+    | 'noExcludeDescendants'
+    | 'yes'
+    | 'yesExcludeDescendants'
+  ),
+  showSoftInputOnFocus?: ?boolean,
 |}>;
 
 type Props = $ReadOnly<{|
@@ -412,6 +439,45 @@ const TextInput = createReactClass({
       'sentences',
       'words',
       'characters',
+    ]),
+    /**
+     * Determines which content to suggest on auto complete, e.g.`username`.
+     * To disable auto complete, use `off`.
+     *
+     * *Android Only*
+     *
+     * The following values work on Android only:
+     *
+     * - `username`
+     * - `password`
+     * - `email`
+     * - `name`
+     * - `tel`
+     * - `street-address`
+     * - `postal-code`
+     * - `cc-number`
+     * - `cc-csc`
+     * - `cc-exp`
+     * - `cc-exp-month`
+     * - `cc-exp-year`
+     * - `off`
+     *
+     * @platform android
+     */
+    autoCompleteType: PropTypes.oneOf([
+      'cc-csc',
+      'cc-exp',
+      'cc-exp-month',
+      'cc-exp-year',
+      'cc-number',
+      'email',
+      'name',
+      'password',
+      'postal-code',
+      'street-address',
+      'tel',
+      'username',
+      'off',
     ]),
     /**
      * If `false`, disables auto-correct. The default value is `true`.
@@ -783,6 +849,15 @@ const TextInput = createReactClass({
     inlineImagePadding: PropTypes.number,
 
     /**
+     * If `true`, allows TextInput to pass touch events to the parent component.
+     * This allows components such as SwipeableListView to be swipeable from the TextInput on iOS,
+     * as is the case on Android by default.
+     * If `false`, TextInput always asks to handle the input (except when disabled).
+     * @platform ios
+     */
+    rejectResponderTermination: PropTypes.bool,
+
+    /**
      * Determines the types of data converted to clickable URLs in the text input.
      * Only valid if `multiline={true}` and `editable={false}`.
      * By default no data types are detected.
@@ -855,10 +930,17 @@ const TextInput = createReactClass({
       'newPassword',
       'oneTimeCode',
     ]),
+    /**
+     * When `false`, it will prevent the soft keyboard from showing when the field is focused.
+     * Defaults to `true`.
+     * @platform android
+     */
+    showSoftInputOnFocus: PropTypes.bool,
   },
   getDefaultProps() {
     return {
       allowFontScaling: true,
+      rejectResponderTermination: true,
       underlineColorAndroid: 'transparent',
     };
   },
@@ -890,6 +972,10 @@ const TextInput = createReactClass({
     if (tag != null) {
       // tag is null only in unit tests
       TextInputState.registerInput(tag);
+    }
+
+    if (this.props.autoFocus) {
+      this._rafId = requestAnimationFrame(this.focus);
     }
   },
 
@@ -932,8 +1018,8 @@ const TextInput = createReactClass({
     return typeof this.props.value === 'string'
       ? this.props.value
       : typeof this.props.defaultValue === 'string'
-        ? this.props.defaultValue
-        : '';
+      ? this.props.defaultValue
+      : '';
   },
 
   _setNativeRef: function(ref: any) {
@@ -1028,6 +1114,7 @@ const TextInput = createReactClass({
         accessibilityLabel={props.accessibilityLabel}
         accessibilityRole={props.accessibilityRole}
         accessibilityStates={props.accessibilityStates}
+        accessibilityState={props.accessibilityState}
         nativeID={this.props.nativeID}
         testID={props.testID}>
         {textContainer}
@@ -1075,11 +1162,12 @@ const TextInput = createReactClass({
       <TouchableWithoutFeedback
         onLayout={props.onLayout}
         onPress={this._onPress}
-        rejectResponderTermination={true}
+        rejectResponderTermination={props.rejectResponderTermination}
         accessible={props.accessible}
         accessibilityLabel={props.accessibilityLabel}
         accessibilityRole={props.accessibilityRole}
         accessibilityStates={props.accessibilityStates}
+        accessibilityState={props.accessibilityState}
         nativeID={this.props.nativeID}
         testID={props.testID}>
         {textContainer}
@@ -1093,9 +1181,6 @@ const TextInput = createReactClass({
     props.autoCapitalize = UIManager.getViewManagerConfig(
       'AndroidTextInput',
     ).Constants.AutoCapitalizationType[props.autoCapitalize || 'sentences'];
-    /* $FlowFixMe(>=0.53.0 site=react_native_fb,react_native_oss) This comment
-     * suppresses an error when upgrading Flow's support for React. To see the
-     * error delete this comment and run Flow. */
     let children = this.props.children;
     let childCount = 0;
     React.Children.forEach(children, () => ++childCount);
@@ -1140,6 +1225,7 @@ const TextInput = createReactClass({
         accessibilityLabel={this.props.accessibilityLabel}
         accessibilityRole={this.props.accessibilityRole}
         accessibilityStates={this.props.accessibilityStates}
+        accessibilityState={this.props.accessibilityState}
         nativeID={this.props.nativeID}
         testID={this.props.testID}>
         {textContainer}
@@ -1167,7 +1253,7 @@ const TextInput = createReactClass({
     // Make sure to fire the mostRecentEventCount first so it is already set on
     // native when the text value is set.
     if (this._inputRef && this._inputRef.setNativeProps) {
-      this._inputRef.setNativeProps({
+      ReactNative.setNativeProps(this._inputRef, {
         mostRecentEventCount: event.nativeEvent.eventCount,
       });
     }
@@ -1232,7 +1318,7 @@ const TextInput = createReactClass({
       this._inputRef &&
       this._inputRef.setNativeProps
     ) {
-      this._inputRef.setNativeProps(nativeProps);
+      ReactNative.setNativeProps(this._inputRef, nativeProps);
     }
 
     if (this.props.selectionState && selection) {

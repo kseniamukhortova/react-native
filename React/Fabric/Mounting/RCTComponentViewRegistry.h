@@ -7,9 +7,9 @@
 
 #import <UIKit/UIKit.h>
 
-#import <react/core/ReactPrimitives.h>
 #import <React/RCTComponentViewFactory.h>
 #import <React/RCTComponentViewProtocol.h>
+#import <react/core/ReactPrimitives.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -26,7 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
  * for given `componentHandle` and with given `tag`.
  * #RefuseSingleUse
  */
-- (UIView<RCTComponentViewProtocol> *)dequeueComponentViewWithComponentHandle:(facebook::react::ComponentHandle)componentHandle
+- (UIView<RCTComponentViewProtocol> *)dequeueComponentViewWithComponentHandle:
+                                          (facebook::react::ComponentHandle)componentHandle
                                                                           tag:(ReactTag)tag;
 
 /**
@@ -43,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (UIView<RCTComponentViewProtocol> *)componentViewByTag:(ReactTag)tag;
 
 /**
- * Returns `tag` assosiated with given `componentView`.
+ * Returns `tag` associated with given `componentView`.
  */
 - (ReactTag)tagByComponentView:(UIView<RCTComponentViewProtocol> *)componentView;
 

@@ -42,6 +42,7 @@ const inspect = (function() {
   function inspect(obj, opts) {
     var ctx = {
       seen: [],
+      formatValueCalls: 0,
       stylize: stylizeNoColor,
     };
     return formatValue(ctx, obj, opts.depth);
@@ -62,6 +63,13 @@ const inspect = (function() {
   }
 
   function formatValue(ctx, value, recurseTimes) {
+    ctx.formatValueCalls++;
+    if (ctx.formatValueCalls > 200) {
+      return `[TOO BIG formatValueCalls ${
+        ctx.formatValueCalls
+      } exceeded limit of 200]`;
+    }
+
     // Primitive types cannot have properties
     var primitive = formatPrimitive(ctx, value);
     if (primitive) {
@@ -509,9 +517,20 @@ function consoleGroupPolyfill(label) {
   groupStack.push(GROUP_PAD);
 }
 
+function consoleGroupCollapsedPolyfill(label) {
+  global.nativeLoggingHook(groupFormat(GROUP_CLOSE, label), LOG_LEVELS.info);
+  groupStack.push(GROUP_PAD);
+}
+
 function consoleGroupEndPolyfill() {
   groupStack.pop();
   global.nativeLoggingHook(groupFormat(GROUP_CLOSE), LOG_LEVELS.info);
+}
+
+function consoleAssertPolyfill(expression, label) {
+  if (!expression) {
+    global.nativeLoggingHook('Assertion failed: ' + label, LOG_LEVELS.error);
+  }
 }
 
 if (global.nativeLoggingHook) {
@@ -534,6 +553,8 @@ if (global.nativeLoggingHook) {
     table: consoleTablePolyfill,
     group: consoleGroupPolyfill,
     groupEnd: consoleGroupEndPolyfill,
+    groupCollapsed: consoleGroupCollapsedPolyfill,
+    assert: consoleAssertPolyfill,
   };
 
   // If available, also call the original `console` method since that is
@@ -544,7 +565,15 @@ if (global.nativeLoggingHook) {
       const reactNativeMethod = console[methodName];
       if (originalConsole[methodName]) {
         console[methodName] = function() {
-          originalConsole[methodName](...arguments);
+          // TODO(T43930203): remove this special case once originalConsole.assert properly checks
+          // the condition
+          if (methodName === 'assert') {
+            if (!arguments[0]) {
+              originalConsole.assert(...arguments);
+            }
+          } else {
+            originalConsole[methodName](...arguments);
+          }
           reactNativeMethod.apply(console, arguments);
         };
       }
@@ -554,7 +583,6 @@ if (global.nativeLoggingHook) {
     // we still should pass them to original console if they are
     // supported by it.
     [
-      'assert',
       'clear',
       'dir',
       'dirxml',

@@ -1,12 +1,13 @@
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
+ * <p>This source code is licensed under the MIT license found in the LICENSE file in the root
+ * directory of this source tree.
  */
-
 package com.facebook.react.bridge;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import java.util.ArrayList;
 
 /**
@@ -16,15 +17,30 @@ import java.util.ArrayList;
 public interface ReadableArray {
 
   int size();
-  boolean isNull(int index);
-  boolean getBoolean(int index);
-  double getDouble(int index);
-  int getInt(int index);
-  String getString(int index);
-  ReadableArray getArray(int index);
-  ReadableMap getMap(int index);
-  Dynamic getDynamic(int index);
-  ReadableType getType(int index);
-  ArrayList<Object> toArrayList();
 
+  boolean isNull(int index);
+
+  boolean getBoolean(int index);
+
+  double getDouble(int index);
+
+  int getInt(int index);
+
+  @Nullable
+  String getString(int index);
+
+  @Nullable
+  ReadableArray getArray(int index);
+
+  @Nullable
+  ReadableMap getMap(int index);
+
+  @NonNull
+  Dynamic getDynamic(int index);
+
+  @NonNull
+  ReadableType getType(int index);
+
+  @NonNull
+  ArrayList<Object> toArrayList();
 }

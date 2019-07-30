@@ -8,18 +8,21 @@
 #include <memory>
 #include <mutex>
 
+#include <react/components/root/RootComponentDescriptor.h>
 #include <react/config/ReactNativeConfig.h>
 #include <react/core/ComponentDescriptor.h>
 #include <react/core/LayoutConstraints.h>
+#include <react/mounting/ShadowTree.h>
+#include <react/mounting/ShadowTreeDelegate.h>
+#include <react/mounting/ShadowTreeRegistry.h>
+#include <react/uimanager/ComponentDescriptorFactory.h>
 #include <react/uimanager/ComponentDescriptorRegistry.h>
-#include <react/uimanager/ContextContainer.h>
 #include <react/uimanager/SchedulerDelegate.h>
-#include <react/uimanager/ShadowTree.h>
-#include <react/uimanager/ShadowTreeDelegate.h>
-#include <react/uimanager/ShadowTreeRegistry.h>
+#include <react/uimanager/SchedulerToolbox.h>
 #include <react/uimanager/UIManagerBinding.h>
 #include <react/uimanager/UIManagerDelegate.h>
-#include <react/uimanager/primitives.h>
+#include <react/utils/ContextContainer.h>
+#include <react/utils/RuntimeExecutor.h>
 
 namespace facebook {
 namespace react {
@@ -29,7 +32,7 @@ namespace react {
  */
 class Scheduler final : public UIManagerDelegate, public ShadowTreeDelegate {
  public:
-  Scheduler(const SharedContextContainer &contextContainer);
+  Scheduler(SchedulerToolbox schedulerToolbox, SchedulerDelegate *delegate);
   ~Scheduler();
 
 #pragma mark - Surface Management
@@ -64,6 +67,8 @@ class Scheduler final : public UIManagerDelegate, public ShadowTreeDelegate {
       const LayoutConstraints &layoutConstraints,
       const LayoutContext &layoutContext) const;
 
+  const ComponentDescriptor &getComponentDescriptor(ComponentHandle handle);
+
 #pragma mark - Delegate
 
   /*
@@ -81,16 +86,21 @@ class Scheduler final : public UIManagerDelegate, public ShadowTreeDelegate {
       const SharedShadowNodeUnsharedList &rootChildNodes) override;
   void uiManagerDidCreateShadowNode(
       const SharedShadowNode &shadowNode) override;
+  void uiManagerDispatchCommand(
+      const SharedShadowNode &shadowNode,
+      std::string const &commandName,
+      folly::dynamic const args) override;
 
 #pragma mark - ShadowTreeDelegate
 
   void shadowTreeDidCommit(
-      const ShadowTree &shadowTree,
-      const ShadowViewMutationList &mutations) const override;
+      ShadowTree const &shadowTree,
+      MountingCoordinator::Shared const &mountingCoordinator) const override;
 
  private:
   SchedulerDelegate *delegate_;
   SharedComponentDescriptorRegistry componentDescriptorRegistry_;
+  std::unique_ptr<const RootComponentDescriptor> rootComponentDescriptor_;
   ShadowTreeRegistry shadowTreeRegistry_;
   RuntimeExecutor runtimeExecutor_;
   std::shared_ptr<UIManagerBinding> uiManagerBinding_;

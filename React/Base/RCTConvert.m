@@ -89,7 +89,14 @@ RCT_CUSTOM_CONVERTER(NSData *, NSData, [json dataUsingEncoding:NSUTF8StringEncod
 
     // Check if it has a scheme
     if ([path rangeOfString:@":"].location != NSNotFound) {
-      path = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+      NSMutableCharacterSet *urlAllowedCharacterSet = [NSMutableCharacterSet new];
+      [urlAllowedCharacterSet formUnionWithCharacterSet:[NSCharacterSet URLUserAllowedCharacterSet]];
+      [urlAllowedCharacterSet formUnionWithCharacterSet:[NSCharacterSet URLPasswordAllowedCharacterSet]];
+      [urlAllowedCharacterSet formUnionWithCharacterSet:[NSCharacterSet URLHostAllowedCharacterSet]];
+      [urlAllowedCharacterSet formUnionWithCharacterSet:[NSCharacterSet URLPathAllowedCharacterSet]];
+      [urlAllowedCharacterSet formUnionWithCharacterSet:[NSCharacterSet URLQueryAllowedCharacterSet]];
+      [urlAllowedCharacterSet formUnionWithCharacterSet:[NSCharacterSet URLFragmentAllowedCharacterSet]];
+      path = [path stringByAddingPercentEncodingWithAllowedCharacters:urlAllowedCharacterSet];
       URL = [NSURL URLWithString:path];
       if (URL) {
         return URL;
@@ -348,6 +355,7 @@ RCT_ENUM_CONVERTER(UIKeyboardType, (@{
   @"decimal-pad": @(UIKeyboardTypeDecimalPad),
   @"twitter": @(UIKeyboardTypeTwitter),
   @"web-search": @(UIKeyboardTypeWebSearch),
+  @"ascii-capable-number-pad": @(UIKeyboardTypeASCIICapableNumberPad),
   // Added for Android compatibility
   @"numeric": @(UIKeyboardTypeDecimalPad),
 }), UIKeyboardTypeDefault, integerValue)
@@ -760,6 +768,16 @@ RCT_ENUM_CONVERTER(RCTAnimationType, (@{
   NSString *scheme = URL.scheme.lowercaseString;
   if ([scheme isEqualToString:@"file"]) {
     image = RCTImageFromLocalAssetURL(URL);
+    // There is a case where this may fail when the image is at the bundle location.
+    // RCTImageFromLocalAssetURL only checks for the image in the same location as the jsbundle
+    // Hence, if the bundle is CodePush-ed, it will not be able to find the image.
+    // This check is added here instead of being inside RCTImageFromLocalAssetURL, since
+    // we don't want breaking changes to RCTImageFromLocalAssetURL, which is called in a lot of places
+    // This is a deprecated method, and hence has the least impact on existing code. Basically,
+    // instead of crashing the app, it tries one more location for the image. 
+    if (!image) {
+      image = RCTImageFromLocalBundleAssetURL(URL);
+    }
     if (!image) {
       RCTLogConvertError(json, @"an image. File not found.");
     }

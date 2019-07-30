@@ -10,17 +10,16 @@
 
 'use strict';
 
-const React = require('React');
-const Platform = require('Platform');
+const React = require('react');
+const Platform = require('../../Utilities/Platform');
 
-const processColor = require('processColor');
-
-const StatusBarManager = require('NativeModules').StatusBarManager;
+const processColor = require('../../StyleSheet/processColor');
+import NativeStatusBarManager from './NativeStatusBarManager';
 
 /**
  * Status bar style
  */
-export type StatusBarStyle = $Enum<{
+export type StatusBarStyle = $Keys<{
   /**
    * Default status bar style (dark for iOS, light for Android)
    */
@@ -38,7 +37,7 @@ export type StatusBarStyle = $Enum<{
 /**
  * Status bar animation
  */
-export type StatusBarAnimation = $Enum<{
+export type StatusBarAnimation = $Keys<{
   /**
    * No animation
    */
@@ -182,11 +181,34 @@ function createStackEntry(props: any): any {
  *
  * ### Imperative API
  *
- * For cases where using a component is not ideal, there is also an imperative
- * API exposed as static functions on the component. It is however not recommended
- * to use the static API and the component for the same prop because any value
- * set by the static API will get overriden by the one set by the component in
- * the next render.
+ * For cases where using a component is not ideal, there are static methods
+ * to manipulate the `StatusBar` display stack. These methods have the same
+ * behavior as mounting and unmounting a `StatusBar` component.
+ *
+ * For example, you can call `StatusBar.pushStackEntry` to update the status bar
+ * before launching a third-party native UI component, and then call
+ * `StatusBar.popStackEntry` when completed.
+ *
+ * ```
+ * const openThirdPartyBugReporter = async () => {
+ *   // The bug reporter has a dark background, so we push a new status bar style.
+ *   const stackEntry = StatusBar.pushStackEntry({barStyle: 'light-content'});
+ *
+ *   // `open` returns a promise that resolves when the UI is dismissed.
+ *   await BugReporter.open();
+ *
+ *   // Don't forget to call `popStackEntry` when you're done.
+ *   StatusBar.popStackEntry(stackEntry);
+ * };
+ * ```
+ *
+ * There is a legacy imperative API that enables you to manually update the
+ * status bar styles. However, the legacy API does not update the internal
+ * `StatusBar` display stack, which means that any changes will be overridden
+ * whenever a `StatusBar` component is mounted or unmounted.
+ *
+ * It is strongly advised that you use `pushStackEntry`, `popStackEntry`, or
+ * `replaceStackEntry` instead of the static methods beginning with `set`.
  *
  * ### Constants
  *
@@ -198,7 +220,12 @@ class StatusBar extends React.Component<Props> {
   static _defaultProps = createStackEntry({
     animated: false,
     showHideTransition: 'fade',
-    backgroundColor: 'black',
+    backgroundColor: Platform.select({
+      android:
+        NativeStatusBarManager.getConstants().DEFAULT_BACKGROUND_COLOR ??
+        'black',
+      ios: 'black',
+    }),
     barStyle: 'default',
     translucent: false,
     hidden: false,
@@ -218,7 +245,7 @@ class StatusBar extends React.Component<Props> {
    *
    * @platform android
    */
-  static currentHeight = StatusBarManager.HEIGHT;
+  static currentHeight = NativeStatusBarManager.getConstants().HEIGHT;
 
   // Provide an imperative API as static functions of the component.
   // See the corresponding prop for more detail.
@@ -233,9 +260,9 @@ class StatusBar extends React.Component<Props> {
     animation = animation || 'none';
     StatusBar._defaultProps.hidden.value = hidden;
     if (Platform.OS === 'ios') {
-      StatusBarManager.setHidden(hidden, animation);
+      NativeStatusBarManager.setHidden(hidden, animation);
     } else if (Platform.OS === 'android') {
-      StatusBarManager.setHidden(hidden);
+      NativeStatusBarManager.setHidden(hidden);
     }
   }
 
@@ -248,9 +275,9 @@ class StatusBar extends React.Component<Props> {
     animated = animated || false;
     StatusBar._defaultProps.barStyle.value = style;
     if (Platform.OS === 'ios') {
-      StatusBarManager.setStyle(style, animated);
+      NativeStatusBarManager.setStyle(style, animated);
     } else if (Platform.OS === 'android') {
-      StatusBarManager.setStyle(style);
+      NativeStatusBarManager.setStyle(style);
     }
   }
 
@@ -266,7 +293,7 @@ class StatusBar extends React.Component<Props> {
       return;
     }
     StatusBar._defaultProps.networkActivityIndicatorVisible = visible;
-    StatusBarManager.setNetworkActivityIndicatorVisible(visible);
+    NativeStatusBarManager.setNetworkActivityIndicatorVisible(visible);
   }
 
   /**
@@ -281,7 +308,16 @@ class StatusBar extends React.Component<Props> {
     }
     animated = animated || false;
     StatusBar._defaultProps.backgroundColor.value = color;
-    StatusBarManager.setColor(processColor(color), animated);
+
+    const processedColor = processColor(color);
+    if (processedColor == null) {
+      console.warn(
+        `\`StatusBar.setBackgroundColor\`: Color ${color} parsed to null or undefined`,
+      );
+      return;
+    }
+
+    NativeStatusBarManager.setColor(processedColor, animated);
   }
 
   /**
@@ -294,7 +330,49 @@ class StatusBar extends React.Component<Props> {
       return;
     }
     StatusBar._defaultProps.translucent = translucent;
-    StatusBarManager.setTranslucent(translucent);
+    NativeStatusBarManager.setTranslucent(translucent);
+  }
+
+  /**
+   * Push a StatusBar entry onto the stack.
+   * The return value should be passed to `popStackEntry` when complete.
+   *
+   * @param props Object containing the StatusBar props to use in the stack entry.
+   */
+  static pushStackEntry(props: any) {
+    const entry = createStackEntry(props);
+    StatusBar._propsStack.push(entry);
+    StatusBar._updatePropsStack();
+    return entry;
+  }
+
+  /**
+   * Pop a StatusBar entry from the stack.
+   *
+   * @param entry Entry returned from `pushStackEntry`.
+   */
+  static popStackEntry(entry: any) {
+    const index = StatusBar._propsStack.indexOf(entry);
+    if (index !== -1) {
+      StatusBar._propsStack.splice(index, 1);
+    }
+    StatusBar._updatePropsStack();
+  }
+
+  /**
+   * Replace an existing StatusBar stack entry with new props.
+   *
+   * @param entry Entry returned from `pushStackEntry` to replace.
+   * @param props Object containing the StatusBar props to use in the replacement stack entry.
+   */
+  static replaceStackEntry(entry: any, props: any) {
+    const newEntry = createStackEntry(props);
+    const index = StatusBar._propsStack.indexOf(entry);
+    if (index !== -1) {
+      StatusBar._propsStack[index] = newEntry;
+    }
+    StatusBar._updatePropsStack();
+    return newEntry;
   }
 
   static defaultProps = {
@@ -309,32 +387,26 @@ class StatusBar extends React.Component<Props> {
     // and always update the native status bar with the props from the top of then
     // stack. This allows having multiple StatusBar components and the one that is
     // added last or is deeper in the view hierarchy will have priority.
-    this._stackEntry = createStackEntry(this.props);
-    StatusBar._propsStack.push(this._stackEntry);
-    this._updatePropsStack();
+    this._stackEntry = StatusBar.pushStackEntry(this.props);
   }
 
   componentWillUnmount() {
     // When a StatusBar is unmounted, remove itself from the stack and update
     // the native bar with the next props.
-    const index = StatusBar._propsStack.indexOf(this._stackEntry);
-    StatusBar._propsStack.splice(index, 1);
-
-    this._updatePropsStack();
+    StatusBar.popStackEntry(this._stackEntry);
   }
 
   componentDidUpdate() {
-    const index = StatusBar._propsStack.indexOf(this._stackEntry);
-    this._stackEntry = createStackEntry(this.props);
-    StatusBar._propsStack[index] = this._stackEntry;
-
-    this._updatePropsStack();
+    this._stackEntry = StatusBar.replaceStackEntry(
+      this._stackEntry,
+      this.props,
+    );
   }
 
   /**
    * Updates the native status bar with the props from the stack.
    */
-  _updatePropsStack = () => {
+  static _updatePropsStack = () => {
     // Send the update to the native module only once at the end of the frame.
     clearImmediate(StatusBar._updateImmediate);
     StatusBar._updateImmediate = setImmediate(() => {
@@ -350,13 +422,13 @@ class StatusBar extends React.Component<Props> {
           !oldProps ||
           oldProps.barStyle.value !== mergedProps.barStyle.value
         ) {
-          StatusBarManager.setStyle(
+          NativeStatusBarManager.setStyle(
             mergedProps.barStyle.value,
-            mergedProps.barStyle.animated,
+            mergedProps.barStyle.animated || false,
           );
         }
         if (!oldProps || oldProps.hidden.value !== mergedProps.hidden.value) {
-          StatusBarManager.setHidden(
+          NativeStatusBarManager.setHidden(
             mergedProps.hidden.value,
             mergedProps.hidden.animated
               ? mergedProps.hidden.transition
@@ -369,7 +441,7 @@ class StatusBar extends React.Component<Props> {
           oldProps.networkActivityIndicatorVisible !==
             mergedProps.networkActivityIndicatorVisible
         ) {
-          StatusBarManager.setNetworkActivityIndicatorVisible(
+          NativeStatusBarManager.setNetworkActivityIndicatorVisible(
             mergedProps.networkActivityIndicatorVisible,
           );
         }
@@ -378,22 +450,33 @@ class StatusBar extends React.Component<Props> {
           !oldProps ||
           oldProps.barStyle.value !== mergedProps.barStyle.value
         ) {
-          StatusBarManager.setStyle(mergedProps.barStyle.value);
+          NativeStatusBarManager.setStyle(mergedProps.barStyle.value);
         }
         if (
           !oldProps ||
           oldProps.backgroundColor.value !== mergedProps.backgroundColor.value
         ) {
-          StatusBarManager.setColor(
-            processColor(mergedProps.backgroundColor.value),
-            mergedProps.backgroundColor.animated,
+          const processedColor = processColor(
+            mergedProps.backgroundColor.value,
           );
+          if (processedColor == null) {
+            console.warn(
+              `\`StatusBar._updatePropsStack\`: Color ${
+                mergedProps.backgroundColor.value
+              } parsed to null or undefined`,
+            );
+          } else {
+            NativeStatusBarManager.setColor(
+              processedColor,
+              mergedProps.backgroundColor.animated,
+            );
+          }
         }
         if (!oldProps || oldProps.hidden.value !== mergedProps.hidden.value) {
-          StatusBarManager.setHidden(mergedProps.hidden.value);
+          NativeStatusBarManager.setHidden(mergedProps.hidden.value);
         }
         if (!oldProps || oldProps.translucent !== mergedProps.translucent) {
-          StatusBarManager.setTranslucent(mergedProps.translucent);
+          NativeStatusBarManager.setTranslucent(mergedProps.translucent);
         }
       }
       // Update the current prop values.
