@@ -141,6 +141,7 @@ public class ARTSurfaceViewShadowNode extends LayoutShadowNode
   public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
     mSurface.release();
     mSurface = null;
+    mHasPendingUpdates = true;
     return true;
   }
 
