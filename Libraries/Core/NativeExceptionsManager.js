@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @flow strict-local
+ * @flow strict
  * @format
  */
 
@@ -15,18 +15,23 @@ import * as TurboModuleRegistry from '../TurboModule/TurboModuleRegistry';
 
 export type StackFrame = {|
   column: ?number,
-  file: string,
-  lineNumber: number,
+  file: ?string,
+  lineNumber: ?number,
   methodName: string,
   collapse?: boolean,
 |};
 
 export type ExceptionData = {
   message: string,
+  originalMessage: ?string,
+  name: ?string,
+  componentStack: ?string,
   stack: Array<StackFrame>,
   id: number,
   isFatal: boolean,
-  extraData?: ?{},
+  // flowlint-next-line unclear-type:off
+  extraData?: Object,
+  ...
 };
 
 export interface Spec extends TurboModule {
@@ -42,15 +47,18 @@ export interface Spec extends TurboModule {
     stack: Array<StackFrame>,
     exceptionId: number,
   ) => void;
+  // eslint-disable-next-line @react-native/codegen/react-native-modules
   +reportException?: (data: ExceptionData) => void;
   +updateExceptionMessage: (
     message: string,
     stack: Array<StackFrame>,
     exceptionId: number,
   ) => void;
-  // Android only
+  // TODO(T53311281): This is a noop on iOS now. Implement it.
   +dismissRedbox?: () => void;
 }
+
+const Platform = require('../Utilities/Platform');
 
 const NativeModule = TurboModuleRegistry.getEnforcing<Spec>(
   'ExceptionsManager',
@@ -79,7 +87,8 @@ const ExceptionsManager = {
     NativeModule.updateExceptionMessage(message, stack, exceptionId);
   },
   dismissRedbox(): void {
-    if (NativeModule.dismissRedbox) {
+    if (Platform.OS !== 'ios' && NativeModule.dismissRedbox) {
+      // TODO(T53311281): This is a noop on iOS now. Implement it.
       NativeModule.dismissRedbox();
     }
   },

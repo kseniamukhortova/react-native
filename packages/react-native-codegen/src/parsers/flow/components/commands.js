@@ -11,13 +11,13 @@
 'use strict';
 
 import type {CommandTypeShape} from '../../../CodegenSchema.js';
-import type {TypeMap} from '../utils.js';
+import type {TypeDeclarationMap} from '../utils.js';
 
 const {getValueFromTypes} = require('../utils.js');
 
 type EventTypeAST = Object;
 
-function buildCommandSchema(property, types: TypeMap) {
+function buildCommandSchema(property, types: TypeDeclarationMap) {
   const name = property.key.name;
   const optional = property.optional;
   const value = getValueFromTypes(property.value, types);
@@ -26,13 +26,14 @@ function buildCommandSchema(property, types: TypeMap) {
 
   if (
     !(
+      firstParam.id != null &&
       firstParam.id.type === 'QualifiedTypeIdentifier' &&
       firstParam.id.qualification.name === 'React' &&
-      firstParam.id.id.name === 'Ref'
+      firstParam.id.id.name === 'ElementRef'
     )
   ) {
     throw new Error(
-      `The first argument of method ${name} must be of type React.Ref<>`,
+      `The first argument of method ${name} must be of type React.ElementRef<>`,
     );
   }
 
@@ -46,6 +47,12 @@ function buildCommandSchema(property, types: TypeMap) {
     let returnType;
 
     switch (type) {
+      case 'RootTag':
+        returnType = {
+          type: 'ReservedFunctionValueTypeAnnotation',
+          name: 'RootTag',
+        };
+        break;
       case 'BooleanTypeAnnotation':
         returnType = {
           type: 'BooleanTypeAnnotation',
@@ -54,6 +61,16 @@ function buildCommandSchema(property, types: TypeMap) {
       case 'Int32':
         returnType = {
           type: 'Int32TypeAnnotation',
+        };
+        break;
+      case 'Double':
+        returnType = {
+          type: 'DoubleTypeAnnotation',
+        };
+        break;
+      case 'Float':
+        returnType = {
+          type: 'FloatTypeAnnotation',
         };
         break;
       default:
@@ -81,7 +98,7 @@ function buildCommandSchema(property, types: TypeMap) {
 
 function getCommands(
   commandTypeAST: $ReadOnlyArray<EventTypeAST>,
-  types: TypeMap,
+  types: TypeDeclarationMap,
 ): $ReadOnlyArray<CommandTypeShape> {
   return commandTypeAST
     .filter(property => property.type === 'ObjectTypeProperty')

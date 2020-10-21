@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow strict-local
+ * @flow strict
  */
 
 'use strict';
@@ -25,6 +25,7 @@ export type PermissionType =
   | 'android.permission.READ_CONTACTS'
   | 'android.permission.WRITE_CONTACTS'
   | 'android.permission.GET_ACCOUNTS'
+  | 'android.permission.ACCESS_BACKGROUND_LOCATION'
   | 'android.permission.ACCESS_FINE_LOCATION'
   | 'android.permission.ACCESS_COARSE_LOCATION'
   | 'android.permission.RECORD_AUDIO'
@@ -46,6 +47,7 @@ export type PermissionType =
 */
 
 export interface Spec extends TurboModule {
+  // eslint-disable-next-line @react-native/codegen/react-native-modules
   +checkPermission: (permission: PermissionType) => Promise<boolean>;
   +requestPermission: (permission: PermissionType) => Promise<PermissionStatus>;
   +shouldShowRequestPermissionRationale: (
@@ -53,7 +55,7 @@ export interface Spec extends TurboModule {
   ) => Promise<boolean>;
   +requestMultiplePermissions: (
     permissions: Array<PermissionType>,
-  ) => Promise<{[permission: PermissionType]: PermissionStatus}>;
+  ) => Promise<{[permission: PermissionType]: PermissionStatus, ...}>;
 }
 
-export default TurboModuleRegistry.get<Spec>('PermissionsAndroid');
+export default (TurboModuleRegistry.get<Spec>('PermissionsAndroid'): ?Spec);

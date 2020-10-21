@@ -5,20 +5,23 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow
+ * @flow strict-local
  */
 
 'use strict';
 
-import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
 import type {ViewProps} from 'react-native/Libraries/Components/View/ViewPropTypes';
+import type {ColorValue} from 'react-native/Libraries/StyleSheet/StyleSheet';
 import type {
   WithDefault,
   DirectEventHandler,
   Int32,
   Float,
 } from 'react-native/Libraries/Types/CodegenTypes';
-import type {ColorValue} from 'react-native/Libraries/StyleSheet/StyleSheetTypes';
+import codegenNativeCommands from 'react-native/Libraries/Utilities/codegenNativeCommands';
+import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
+import type {HostComponent} from 'react-native/Libraries/Renderer/shims/ReactNativeTypes';
+import * as React from 'react';
 
 type DrawerStateEvent = $ReadOnly<{|
   drawerState: Int32,
@@ -53,14 +56,14 @@ type NativeProps = $ReadOnly<{|
   /**
    * Specifies the side of the screen from which the drawer will slide in.
    */
-  drawerPosition: ?Int32,
+  drawerPosition?: WithDefault<'left' | 'right', 'left'>,
 
   /**
    * Specifies the width of the drawer, more precisely the width of the view that be pulled in
    * from the edge of the window.
    */
 
-  drawerWidth?: ?Float,
+  drawerWidth?: WithDefault<Float, null>,
 
   /**
    * Specifies the lock mode of the drawer. The drawer can be locked in 3 states:
@@ -106,4 +109,17 @@ type NativeProps = $ReadOnly<{|
   statusBarBackgroundColor?: ?ColorValue,
 |}>;
 
-export default codegenNativeComponent<NativeProps>('AndroidDrawerLayout');
+type NativeType = HostComponent<NativeProps>;
+
+interface NativeCommands {
+  +openDrawer: (viewRef: React.ElementRef<NativeType>) => void;
+  +closeDrawer: (viewRef: React.ElementRef<NativeType>) => void;
+}
+
+export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
+  supportedCommands: ['openDrawer', 'closeDrawer'],
+});
+
+export default (codegenNativeComponent<NativeProps>(
+  'AndroidDrawerLayout',
+): NativeType);

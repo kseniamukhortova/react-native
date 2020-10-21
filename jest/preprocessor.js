@@ -12,9 +12,11 @@
 
 'use strict';
 
-const {transformSync: babelTransformSync} = require('@babel/core');
 const babelRegisterOnly = require('metro-babel-register');
-const createCacheKeyFunction = require('fbjs-scripts/jest/createCacheKeyFunction');
+const createCacheKeyFunction = require('@jest/create-cache-key-function')
+  .default;
+
+const {transformSync: babelTransformSync} = require('@babel/core');
 const generate = require('@babel/generator').default;
 
 const nodeFiles = new RegExp(
@@ -28,7 +30,7 @@ babelRegisterOnly([]);
 
 const transformer = require('metro-react-native-babel-transformer');
 module.exports = {
-  process(src /*: string */, file /*: string */) {
+  process(src /*: string */, file /*: string */) /*: string */ {
     if (nodeFiles.test(file)) {
       // node specific transforms only
       return babelTransformSync(src, {
@@ -46,6 +48,7 @@ module.exports = {
         dev: true,
         enableBabelRuntime: false,
         experimentalImportSupport: false,
+        globalPrefix: '',
         hot: false,
         inlineRequires: true,
         minify: false,
@@ -111,9 +114,9 @@ module.exports = {
     ).code;
   },
 
-  getCacheKey: createCacheKeyFunction([
+  getCacheKey: (createCacheKeyFunction([
     __filename,
     require.resolve('metro-react-native-babel-transformer'),
     require.resolve('@babel/core/package.json'),
-  ]),
+  ]) /*: any */),
 };

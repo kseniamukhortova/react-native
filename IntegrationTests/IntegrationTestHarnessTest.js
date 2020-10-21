@@ -10,9 +10,9 @@
 
 'use strict';
 
-const requestAnimationFrame = require('fbjs/lib/requestAnimationFrame');
 const React = require('react');
 const ReactNative = require('react-native');
+
 const {Text, View, StyleSheet} = ReactNative;
 const {TestModule} = ReactNative.NativeModules;
 
@@ -26,7 +26,7 @@ type State = {|
 |};
 
 class IntegrationTestHarnessTest extends React.Component<Props, State> {
-  state = {
+  state: State = {
     done: false,
   };
 
@@ -38,7 +38,7 @@ class IntegrationTestHarnessTest extends React.Component<Props, State> {
     }
   }
 
-  runTest = () => {
+  runTest: () => void = () => {
     if (this.props.shouldThrow) {
       throw new Error('Throwing error because shouldThrow');
     }
@@ -52,7 +52,7 @@ class IntegrationTestHarnessTest extends React.Component<Props, State> {
     });
   };
 
-  render() {
+  render(): React.Node {
     return (
       <View style={styles.container}>
         <Text>

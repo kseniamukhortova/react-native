@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow
+ * @flow strict-local
  */
 
 'use strict';
@@ -25,6 +25,7 @@ export type DirectEventHandler<
 > = (event: SyntheticEvent<T>) => void | Promise<void>;
 
 // Prop types
+export type Double = number;
 export type Float = number;
 export type Int32 = number;
 

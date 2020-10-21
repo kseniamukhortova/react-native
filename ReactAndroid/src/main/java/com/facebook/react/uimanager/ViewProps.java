@@ -1,9 +1,10 @@
-/**
+/*
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * <p>This source code is licensed under the MIT license found in the LICENSE file in the root
- * directory of this source tree.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  */
+
 package com.facebook.react.uimanager;
 
 import android.graphics.Color;
@@ -61,6 +62,8 @@ public class ViewProps {
   public static final String START = "start";
   public static final String END = "end";
 
+  public static final String IS_ATTACHMENT = "isAttachment";
+
   public static final String AUTO = "auto";
   public static final String NONE = "none";
   public static final String BOX_NONE = "box-none";
@@ -82,15 +85,19 @@ public class ViewProps {
   public static final String FONT_SIZE = "fontSize";
   public static final String FONT_WEIGHT = "fontWeight";
   public static final String FONT_STYLE = "fontStyle";
+  public static final String FONT_VARIANT = "fontVariant";
   public static final String FONT_FAMILY = "fontFamily";
   public static final String LINE_HEIGHT = "lineHeight";
   public static final String LETTER_SPACING = "letterSpacing";
   public static final String NEEDS_OFFSCREEN_ALPHA_COMPOSITING = "needsOffscreenAlphaCompositing";
   public static final String NUMBER_OF_LINES = "numberOfLines";
   public static final String ELLIPSIZE_MODE = "ellipsizeMode";
+  public static final String ADJUSTS_FONT_SIZE_TO_FIT = "adjustsFontSizeToFit";
+  public static final String MINIMUM_FONT_SCALE = "minimumFontScale";
   public static final String ON = "on";
   public static final String RESIZE_MODE = "resizeMode";
   public static final String RESIZE_METHOD = "resizeMethod";
+  public static final String LAYOUT_DIRECTION = "layoutDirection";
   public static final String TEXT_ALIGN = "textAlign";
   public static final String TEXT_ALIGN_VERTICAL = "textAlignVertical";
   public static final String TEXT_DECORATION_LINE = "textDecorationLine";
@@ -130,6 +137,32 @@ public class ViewProps {
   public static final String BORDER_START_COLOR = "borderStartColor";
   public static final String BORDER_END_COLOR = "borderEndColor";
   public static final String ON_LAYOUT = "onLayout";
+
+  public static final String TRANSFORM = "transform";
+  public static final String ELEVATION = "elevation";
+  public static final String SHADOW_COLOR = "shadowColor";
+  public static final String Z_INDEX = "zIndex";
+  public static final String RENDER_TO_HARDWARE_TEXTURE = "renderToHardwareTextureAndroid";
+  public static final String ACCESSIBILITY_LABEL = "accessibilityLabel";
+  public static final String ACCESSIBILITY_HINT = "accessibilityHint";
+  public static final String ACCESSIBILITY_LIVE_REGION = "accessibilityLiveRegion";
+  public static final String ACCESSIBILITY_ROLE = "accessibilityRole";
+  public static final String ACCESSIBILITY_STATE = "accessibilityState";
+  public static final String ACCESSIBILITY_ACTIONS = "accessibilityActions";
+  public static final String ACCESSIBILITY_VALUE = "accessibilityValue";
+  public static final String IMPORTANT_FOR_ACCESSIBILITY = "importantForAccessibility";
+
+  // DEPRECATED
+  public static final String ROTATION = "rotation";
+  public static final String SCALE_X = "scaleX";
+  public static final String SCALE_Y = "scaleY";
+  public static final String TRANSLATE_X = "translateX";
+  public static final String TRANSLATE_Y = "translateY";
+
+  /** Used to locate views in end-to-end (UI) tests. */
+  public static final String TEST_ID = "testID";
+
+  public static final String NATIVE_ID = "nativeID";
 
   public static final int[] BORDER_SPACING_TYPES = {
     Spacing.ALL,

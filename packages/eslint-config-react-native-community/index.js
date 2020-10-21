@@ -16,9 +16,13 @@ module.exports = {
     sourceType: 'module',
   },
 
+  extends: [
+    'plugin:prettier/recommended', // https://github.com/prettier/eslint-plugin-prettier#recommended-configuration
+    'prettier/react',
+  ],
+
   plugins: [
     'eslint-comments',
-    'prettier',
     'react',
     'react-hooks',
     'react-native',
@@ -66,6 +70,9 @@ module.exports = {
         jest: true,
         'jest/globals': true,
       },
+      rules: {
+        'react-native/no-inline-styles': 0,
+      },
     },
   ],
 
@@ -82,6 +89,7 @@ module.exports = {
     clearTimeout: false,
     console: false,
     document: false,
+    ErrorUtils: false,
     escape: false,
     Event: false,
     EventTarget: false,
@@ -89,6 +97,8 @@ module.exports = {
     fetch: false,
     FormData: false,
     global: false,
+    Headers: false,
+    Intl: false,
     Map: true,
     module: false,
     navigator: false,
@@ -101,6 +111,9 @@ module.exports = {
     setImmediate: true,
     setInterval: false,
     setTimeout: false,
+    URL: false,
+    URLSearchParams: false,
+    WebSocket: true,
     window: false,
     XMLHttpRequest: false,
   },
@@ -174,6 +187,7 @@ module.exports = {
     'no-self-compare': 1, // disallow comparisons where both sides are exactly the same (off by default)
     'no-sequences': 1, // disallow use of comma operator
     'no-unused-expressions': 0, // disallow usage of expressions in statement position
+    'no-useless-escape': 1, // disallow escapes that don't have any effect in literals
     'no-void': 1, // disallow use of void operator (off by default)
     'no-warning-comments': 0, // disallow usage of configurable warning terms in comments": 1,                        // e.g. TODO or FIXME (off by default)
     'no-with': 1, // disallow use of the with statement
@@ -217,10 +231,6 @@ module.exports = {
     'eslint-comments/no-unlimited-disable': 1, // disallows eslint-disable comments without rule names
     'eslint-comments/no-unused-disable': 1, // disallow disables that don't cover any errors
     'eslint-comments/no-unused-enable': 1, // // disallow enables that don't enable anything or enable rules that weren't disabled
-
-    // Prettier Plugin
-    // https://github.com/prettier/eslint-plugin-prettier
-    'prettier/prettier': 2,
 
     // Stylistic Issues
     // These rules are purely matters of style and are quite subjective.

@@ -7,6 +7,7 @@
  * @flow
  * @format
  */
+
 'use strict';
 
 const NativeModules = require('../BatchedBridge/NativeModules');
@@ -31,12 +32,15 @@ function getConstants(): Object {
   return NativeUIManagerConstants;
 }
 
+/* $FlowFixMe(>=0.123.0 site=react_native_fb) This comment suppresses an error
+ * found when Flow v0.123.0 was deployed. To see the error, delete this comment
+ * and run Flow. */
 const UIManagerJS = {
   ...NativeUIManager,
   getConstants(): Object {
     return getConstants();
   },
-  getViewManagerConfig: function(viewManagerName: string) {
+  getViewManagerConfig: function(viewManagerName: string): any {
     if (
       viewManagerConfigs[viewManagerName] === undefined &&
       NativeUIManager.getConstantsForViewManager
@@ -86,8 +90,8 @@ NativeUIManager.getViewManagerConfig = UIManagerJS.getViewManagerConfig;
 
 function lazifyViewManagerConfig(viewName) {
   const viewConfig = getConstants()[viewName];
+  viewManagerConfigs[viewName] = viewConfig;
   if (viewConfig.Manager) {
-    viewManagerConfigs[viewName] = viewConfig;
     defineLazyObjectProperty(viewConfig, 'Constants', {
       get: () => {
         const viewManager = NativeModules[viewConfig.Manager];

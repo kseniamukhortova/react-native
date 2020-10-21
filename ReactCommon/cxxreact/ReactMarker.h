@@ -1,7 +1,9 @@
-// Copyright (c) Facebook, Inc. and its affiliates.
-
-// This source code is licensed under the MIT license found in the
-// LICENSE file in the root directory of this source tree.
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
 
 #pragma once
 
@@ -28,9 +30,16 @@ enum ReactMarkerId {
 };
 
 #ifdef __APPLE__
-using LogTaggedMarker = std::function<void(const ReactMarkerId, const char* tag)>;
+using LogTaggedMarker =
+    std::function<void(const ReactMarkerId, const char *tag)>;
+using LogTaggedMarkerWithInstanceKey = std::function<
+    void(const ReactMarkerId, const char *tag, const int instanceKey)>;
 #else
-typedef void(*LogTaggedMarker)(const ReactMarkerId, const char* tag);
+typedef void (*LogTaggedMarker)(const ReactMarkerId, const char *tag);
+typedef void (*LogTaggedMarkerWithInstanceKey)(
+    const ReactMarkerId,
+    const char *tag,
+    const int instanceKey);
 #endif
 
 #ifndef RN_EXPORT
@@ -38,9 +47,10 @@ typedef void(*LogTaggedMarker)(const ReactMarkerId, const char* tag);
 #endif
 
 extern RN_EXPORT LogTaggedMarker logTaggedMarker;
+extern RN_EXPORT LogTaggedMarkerWithInstanceKey logTaggedMarkerWithInstanceKey;
 
 extern RN_EXPORT void logMarker(const ReactMarkerId markerId);
 
-}
-}
-}
+} // namespace ReactMarker
+} // namespace react
+} // namespace facebook

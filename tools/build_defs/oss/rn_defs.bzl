@@ -15,7 +15,7 @@ _DEBUG_PREPROCESSOR_FLAGS = []
 
 _APPLE_COMPILER_FLAGS = []
 
-def get_debug_preprocessor_flags():
+def get_preprocessor_flags_for_build_mode():
     return _DEBUG_PREPROCESSOR_FLAGS
 
 def get_apple_compiler_flags():
@@ -27,18 +27,17 @@ GLOG_DEP = "//ReactAndroid/build/third-party-ndk/glog:glog"
 
 INSPECTOR_FLAGS = []
 
-APPLE_JSC_DEPS = []
-
-ANDROID_JSC_INTERNAL_DEPS = [
-    "//native/third-party/jsc:jsc",
-    "//native/third-party/jsc:jsc_legacy_profiler",
-]
-
-ANDROID_JSC_DEPS = ANDROID_JSC_INTERNAL_DEPS
+# Platform Definitions
+CXX = "Default"
 
 ANDROID = "Android"
 
-APPLE = ""
+APPLE = "Apple"
+
+# Apple SDK Definitions
+IOS = "ios"
+
+MACOSX = "macosx"
 
 YOGA_TARGET = "//ReactAndroid/src/main/java/com/facebook:yoga"
 
@@ -96,14 +95,14 @@ def react_native_integration_tests_target(path):
 def react_native_dep(path):
     return "//ReactAndroid/src/main/" + path
 
+def react_native_android_toplevel_dep(path):
+    return react_native_dep(path)
+
 # Example: react_native_xplat_dep('java/com/facebook/systrace:systrace')
 def react_native_xplat_dep(path):
     return "//ReactCommon/" + path
 
-def rn_debug_flags():
-    return []
-
-def rn_feature_flags():
+def rn_extra_build_flags():
     return []
 
 # React property preprocessor
@@ -170,16 +169,12 @@ def rn_android_prebuilt_aar(*args, **kwargs):
 def rn_apple_library(*args, **kwargs):
     kwargs.setdefault("link_whole", True)
     kwargs.setdefault("enable_exceptions", True)
+    kwargs.setdefault("target_sdk_version", "10.0")
+    _ = kwargs.pop("plugins_only", False)
     native.apple_library(*args, **kwargs)
 
-def rn_plugin_apple_library(**kwargs):
-    kwargs.setdefault("link_whole", True)
-
-    # This just an alias to apple_library for now.
-    native.apple_library(**kwargs)
-
 def rn_java_library(*args, **kwargs):
-    is_androidx = kwargs.pop("is_androidx", False)
+    _ = kwargs.pop("is_androidx", False)
     native.java_library(*args, **kwargs)
 
 def rn_java_annotation_processor(*args, **kwargs):
@@ -199,15 +194,22 @@ def rn_robolectric_test(name, srcs, vm_args = None, *args, **kwargs):
 
     is_androidx = kwargs.pop("is_androidx", False)
 
+    kwargs["deps"] = kwargs.pop("deps", []) + [
+        react_native_android_toplevel_dep("third-party/java/mockito2:mockito2"),
+        react_native_xplat_dep("libraries/fbcore/src/test/java/com/facebook/powermock:powermock2"),
+        react_native_dep("third-party/java/robolectric/4.4:robolectric"),
+    ]
+
     extra_vm_args = [
         "-XX:+UseConcMarkSweepGC",  # required by -XX:+CMSClassUnloadingEnabled
         "-XX:+CMSClassUnloadingEnabled",
         "-XX:ReservedCodeCacheSize=150M",
-        "-Drobolectric.dependency.dir=buck-out/gen/ReactAndroid/src/main/third-party/java/robolectric3/robolectric",
-        "-Dlibraries=buck-out/gen/ReactAndroid/src/main/third-party/java/robolectric3/robolectric/*.jar",
+        "-Drobolectric.dependency.dir=buck-out/gen/ReactAndroid/src/main/third-party/java/robolectric/4.4",
+        "-Dlibraries=buck-out/gen/ReactAndroid/src/main/third-party/java/robolectric/4.4/*.jar",
         "-Drobolectric.logging.enabled=true",
         "-XX:MaxPermSize=620m",
         "-Drobolectric.offline=true",
+        "-Drobolectric.looperMode=LEGACY",
     ]
     if native.read_config("user", "use_dev_shm"):
         extra_vm_args.append("-Djava.io.tmpdir=/dev/shm")

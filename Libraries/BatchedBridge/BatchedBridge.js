@@ -5,14 +5,14 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow strict-local
+ * @flow strict
  */
 
 'use strict';
 
 const MessageQueue = require('./MessageQueue');
 
-const BatchedBridge = new MessageQueue();
+const BatchedBridge: MessageQueue = new MessageQueue();
 
 // Wire up the batched bridge on the global object so that we can call into it.
 // Ideally, this would be the inverse relationship. I.e. the native environment

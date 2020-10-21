@@ -22,7 +22,7 @@ export interface Spec extends TurboModule {
     requestId: number,
     headers: Array<Header>,
     data: Object,
-    responseType: Object, // TODO: Use stricter type.
+    responseType: string,
     useIncrementalUpdates: boolean,
     timeout: number,
     withCredentials: boolean,
@@ -35,4 +35,4 @@ export interface Spec extends TurboModule {
   +removeListeners: (count: number) => void;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('Networking');
+export default (TurboModuleRegistry.getEnforcing<Spec>('Networking'): Spec);

@@ -5,14 +5,17 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow
+ * @flow strict-local
  */
 
 import type {ViewProps} from '../View/ViewPropTypes';
 import codegenNativeComponent from '../../Utilities/codegenNativeComponent';
+import type {HostComponent} from '../../Renderer/shims/ReactNativeTypes';
 
 type NativeProps = $ReadOnly<{|
   ...ViewProps,
 |}>;
 
-export default codegenNativeComponent<NativeProps>('RCTMaskedView');
+export default (codegenNativeComponent<NativeProps>(
+  'RCTMaskedView',
+): HostComponent<NativeProps>);

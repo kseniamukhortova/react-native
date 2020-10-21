@@ -24,9 +24,7 @@ if (__DEV__) {
 }
 
 if (global.RN$Bridgeless) {
-  // TODO T47525605 Clean this up once stopSurface has been added
-  global.RN$stopSurface =
-    ReactFabric.stopSurface ?? ReactFabric.unmountComponentAtNode;
+  global.RN$stopSurface = ReactFabric.stopSurface;
 } else {
   BatchedBridge.registerCallableModule('ReactFabric', ReactFabric);
 }

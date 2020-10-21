@@ -36,6 +36,7 @@ const OUTER_PROPS = Object.assign(Object.create(null), {
   right: true,
   bottom: true,
   top: true,
+  transform: true,
 });
 
 function splitLayoutProps(
@@ -43,12 +44,13 @@ function splitLayoutProps(
 ): {
   outer: DangerouslyImpreciseStyle,
   inner: DangerouslyImpreciseStyle,
+  ...
 } {
   const inner = {};
   const outer = {};
   if (props) {
-    Object.keys(props).forEach(k => {
-      const value: $ElementType<DangerouslyImpreciseStyle, typeof k> = props[k];
+    Object.keys(props).forEach((k: string) => {
+      const value = props[k];
       if (OUTER_PROPS[k]) {
         outer[k] = value;
       } else {

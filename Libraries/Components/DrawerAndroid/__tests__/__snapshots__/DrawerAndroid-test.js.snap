@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<DrawerLayoutAndroid /> should render as <DrawerLayoutAndroid> when mocked 1`] = `
+exports[`<DrawerLayoutAndroid /> should render as expected: should deep render when mocked (please verify output manually) 1`] = `
 <AndroidDrawerLayout
   drawerBackgroundColor="white"
-  drawerPosition={10}
+  drawerPosition="left"
   drawerWidth={300}
   onDrawerClose={[Function]}
   onDrawerOpen={[Function]}
@@ -52,10 +52,10 @@ exports[`<DrawerLayoutAndroid /> should render as <DrawerLayoutAndroid> when moc
 </AndroidDrawerLayout>
 `;
 
-exports[`<DrawerLayoutAndroid /> should render as <DrawerLayoutAndroid> when not mocked 1`] = `
+exports[`<DrawerLayoutAndroid /> should render as expected: should deep render when not mocked (please verify output manually) 1`] = `
 <AndroidDrawerLayout
   drawerBackgroundColor="white"
-  drawerPosition={10}
+  drawerPosition="left"
   drawerWidth={300}
   onDrawerClose={[Function]}
   onDrawerOpen={[Function]}
@@ -104,19 +104,19 @@ exports[`<DrawerLayoutAndroid /> should render as <DrawerLayoutAndroid> when not
 </AndroidDrawerLayout>
 `;
 
-exports[`<DrawerLayoutAndroid /> should shallow render as <DrawerLayoutAndroid> when mocked 1`] = `
+exports[`<DrawerLayoutAndroid /> should render as expected: should shallow render as <DrawerLayoutAndroid /> when mocked 1`] = `
 <DrawerLayoutAndroid
   drawerBackgroundColor="white"
-  drawerPosition={10}
+  drawerPosition="left"
   drawerWidth={300}
   renderNavigationView={[Function]}
 />
 `;
 
-exports[`<DrawerLayoutAndroid /> should shallow render as <DrawerLayoutAndroid> when not mocked 1`] = `
+exports[`<DrawerLayoutAndroid /> should render as expected: should shallow render as <DrawerLayoutAndroid /> when not mocked 1`] = `
 <DrawerLayoutAndroid
   drawerBackgroundColor="white"
-  drawerPosition={10}
+  drawerPosition="left"
   drawerWidth={300}
   renderNavigationView={[Function]}
 />

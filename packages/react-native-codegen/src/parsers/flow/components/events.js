@@ -12,7 +12,7 @@
 
 import type {
   EventTypeShape,
-  ObjectPropertyType,
+  EventObjectPropertyType,
 } from '../../../CodegenSchema.js';
 
 function getPropertyType(name, optional, typeAnnotation) {
@@ -40,12 +40,24 @@ function getPropertyType(name, optional, typeAnnotation) {
         name,
         optional,
       };
+    case 'Double':
+      return {
+        type: 'DoubleTypeAnnotation',
+        name,
+        optional,
+      };
     case 'Float':
       return {
         type: 'FloatTypeAnnotation',
         name,
         optional,
       };
+    case '$ReadOnly':
+      return getPropertyType(
+        name,
+        optional,
+        typeAnnotation.typeParameters.params[0],
+      );
     case 'ObjectTypeAnnotation':
       return {
         type: 'ObjectTypeAnnotation',
@@ -62,7 +74,7 @@ function getPropertyType(name, optional, typeAnnotation) {
       };
     default:
       (type: empty);
-      throw new Error(`Unable to determine event type for "${name}"`);
+      throw new Error(`Unable to determine event type for "${name}": ${type}`);
   }
 }
 
@@ -72,6 +84,9 @@ function findEventArgumentsAndType(
   bubblingType,
   paperName,
 ) {
+  if (!typeAnnotation.id) {
+    throw new Error("typeAnnotation of event doesn't have a name");
+  }
   const name = typeAnnotation.id.name;
   if (name === '$ReadOnly') {
     return {
@@ -117,7 +132,7 @@ function findEventArgumentsAndType(
   }
 }
 
-function buildPropertiesForEvent(property): ObjectPropertyType {
+function buildPropertiesForEvent(property): EventObjectPropertyType {
   const name = property.key.name;
   const optional =
     property.value.type === 'NullableTypeAnnotation' || property.optional;
@@ -189,11 +204,11 @@ function buildEventSchema(
   }
 
   if (argumentProps === null) {
-    throw new Error(`Unabled to determine event arguments for "${name}"`);
+    throw new Error(`Unable to determine event arguments for "${name}"`);
   }
 
   if (bubblingType === null) {
-    throw new Error(`Unabled to determine event arguments for "${name}"`);
+    throw new Error(`Unable to determine event arguments for "${name}"`);
   }
 }
 
@@ -203,6 +218,7 @@ type EventTypeAST = Object;
 type TypeMap = {
   // $FlowFixMe there's no flowtype for ASTs
   [string]: Object,
+  ...,
 };
 
 function getEvents(

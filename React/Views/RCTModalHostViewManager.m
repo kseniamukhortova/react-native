@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
@@ -15,14 +15,16 @@
 
 @implementation RCTConvert (RCTModalHostView)
 
-RCT_ENUM_CONVERTER(UIModalPresentationStyle, (@{
-  @"fullScreen": @(UIModalPresentationFullScreen),
-#if !TARGET_OS_TV
-  @"pageSheet": @(UIModalPresentationPageSheet),
-  @"formSheet": @(UIModalPresentationFormSheet),
-#endif
-  @"overFullScreen": @(UIModalPresentationOverFullScreen),
-}), UIModalPresentationFullScreen, integerValue)
+RCT_ENUM_CONVERTER(
+    UIModalPresentationStyle,
+    (@{
+      @"fullScreen" : @(UIModalPresentationFullScreen),
+      @"pageSheet" : @(UIModalPresentationPageSheet),
+      @"formSheet" : @(UIModalPresentationFormSheet),
+      @"overFullScreen" : @(UIModalPresentationOverFullScreen),
+    }),
+    UIModalPresentationFullScreen,
+    integerValue)
 
 @end
 
@@ -44,10 +46,11 @@ RCT_ENUM_CONVERTER(UIModalPresentationStyle, (@{
 
 @interface RCTModalHostViewManager () <RCTModalHostViewInteractor>
 
+@property (nonatomic, copy) dispatch_block_t dismissWaitingBlock;
+
 @end
 
-@implementation RCTModalHostViewManager
-{
+@implementation RCTModalHostViewManager {
   NSPointerArray *_hostViews;
 }
 
@@ -64,7 +67,9 @@ RCT_EXPORT_MODULE()
   return view;
 }
 
-- (void)presentModalHostView:(RCTModalHostView *)modalHostView withViewController:(RCTModalHostViewController *)viewController animated:(BOOL)animated
+- (void)presentModalHostView:(RCTModalHostView *)modalHostView
+          withViewController:(RCTModalHostViewController *)viewController
+                    animated:(BOOL)animated
 {
   dispatch_block_t completionBlock = ^{
     if (modalHostView.onShow) {
@@ -74,19 +79,35 @@ RCT_EXPORT_MODULE()
   if (_presentationBlock) {
     _presentationBlock([modalHostView reactViewController], viewController, animated, completionBlock);
   } else {
-    [[modalHostView reactViewController] presentViewController:viewController animated:animated completion:completionBlock];
+    __weak typeof(self) weakself = self;
+    [[modalHostView reactViewController] presentViewController:viewController
+                                                      animated:animated
+                                                    completion:^{
+                                                      !completionBlock ?: completionBlock();
+                                                      __strong typeof(weakself) strongself = weakself;
+                                                      !strongself.dismissWaitingBlock
+                                                          ?: strongself.dismissWaitingBlock();
+                                                      strongself.dismissWaitingBlock = nil;
+                                                    }];
   }
 }
 
-- (void)dismissModalHostView:(RCTModalHostView *)modalHostView withViewController:(RCTModalHostViewController *)viewController animated:(BOOL)animated
+- (void)dismissModalHostView:(RCTModalHostView *)modalHostView
+          withViewController:(RCTModalHostViewController *)viewController
+                    animated:(BOOL)animated
 {
   if (_dismissalBlock) {
     _dismissalBlock([modalHostView reactViewController], viewController, animated, nil);
   } else {
-    [viewController.presentingViewController dismissViewControllerAnimated:animated completion:nil];
+    self.dismissWaitingBlock = ^{
+      [viewController.presentingViewController dismissViewControllerAnimated:animated completion:nil];
+    };
+    if (viewController.presentingViewController) {
+      self.dismissWaitingBlock();
+      self.dismissWaitingBlock = nil;
+    }
   }
 }
-
 
 - (RCTShadowView *)shadowView
 {
@@ -108,9 +129,5 @@ RCT_EXPORT_VIEW_PROPERTY(onShow, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(identifier, NSNumber)
 RCT_EXPORT_VIEW_PROPERTY(supportedOrientations, NSArray)
 RCT_EXPORT_VIEW_PROPERTY(onOrientationChange, RCTDirectEventBlock)
-
-#if TARGET_OS_TV
-RCT_EXPORT_VIEW_PROPERTY(onRequestClose, RCTDirectEventBlock)
-#endif
 
 @end

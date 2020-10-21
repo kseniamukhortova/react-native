@@ -9,45 +9,37 @@
  */
 
 export type CapturedError = {
-  +componentName: ?string,
   +componentStack: string,
   +error: mixed,
-  +errorBoundary: ?{},
-  +errorBoundaryFound: boolean,
-  +errorBoundaryName: string | null,
-  +willRetry: boolean,
+  +errorBoundary: ?{...},
+  ...
 };
 
-import {handleException} from './ExceptionsManager';
+import type {ExtendedError} from './Devtools/parseErrorStack';
+
+import {handleException, SyntheticError} from './ExceptionsManager';
 
 /**
  * Intercept lifecycle errors and ensure they are shown with the correct stack
  * trace within the native redbox component.
  */
-export function showErrorDialog(capturedError: CapturedError): boolean {
+function showErrorDialog(capturedError: CapturedError): boolean {
   const {componentStack, error} = capturedError;
 
-  let errorToHandle: Error;
+  let errorToHandle;
 
   // Typically Errors are thrown but eg strings or null can be thrown as well.
   if (error instanceof Error) {
-    const {message, name} = error;
-
-    const summary = message ? `${name}: ${message}` : name;
-
-    errorToHandle = error;
-
-    try {
-      errorToHandle.message = `${summary}\n\nThis error is located at:${componentStack}`;
-    } catch (e) {}
+    errorToHandle = (error: ExtendedError);
   } else if (typeof error === 'string') {
-    errorToHandle = new Error(
-      `${error}\n\nThis error is located at:${componentStack}`,
-    );
+    errorToHandle = (new SyntheticError(error): ExtendedError);
   } else {
-    errorToHandle = new Error(`Unspecified error at:${componentStack}`);
+    errorToHandle = (new SyntheticError('Unspecified error'): ExtendedError);
   }
-
+  try {
+    errorToHandle.componentStack = componentStack;
+    errorToHandle.isComponentError = true;
+  } catch (e) {}
   handleException(errorToHandle, false);
 
   // Return false here to prevent ReactFiberErrorLogger default behavior of
@@ -56,3 +48,5 @@ export function showErrorDialog(capturedError: CapturedError): boolean {
   // done above by calling ExceptionsManager.
   return false;
 }
+
+module.exports = {showErrorDialog};

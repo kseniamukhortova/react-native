@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
@@ -7,9 +7,11 @@
 
 #import <UIKit/UIKit.h>
 
+#import <React/RCTDefines.h>
+#import <React/RCTGenericDelegateSplitter.h>
+#import <React/RCTMountingTransactionObserving.h>
 #import <React/RCTScrollableProtocol.h>
 #import <React/RCTViewComponentView.h>
-#import <React/RNGenericDelegateSplitter.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -21,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
  * keyboard-avoiding functionality and so on. All that complexity must be implemented inside those components in order
  * to keep the complexity of this component manageable.
  */
-@interface RCTScrollViewComponentView : RCTViewComponentView
+@interface RCTScrollViewComponentView : RCTViewComponentView <RCTMountingTransactionObserving>
 
 /*
  * Finds and returns the closet RCTScrollViewComponentView component to the given view
@@ -43,7 +45,8 @@ NS_ASSUME_NONNULL_BEGIN
 /*
  * Returns a delegate splitter that can be used to subscribe for UIScrollView delegate.
  */
-@property (nonatomic, strong, readonly) RNGenericDelegateSplitter<id<UIScrollViewDelegate>> *scrollViewDelegateSplitter;
+@property (nonatomic, strong, readonly)
+    RCTGenericDelegateSplitter<id<UIScrollViewDelegate>> *scrollViewDelegateSplitter;
 
 @end
 

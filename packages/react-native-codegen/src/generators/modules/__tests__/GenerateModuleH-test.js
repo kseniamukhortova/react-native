@@ -14,14 +14,16 @@
 const fixtures = require('../__test_fixtures__/fixtures.js');
 const generator = require('../GenerateModuleH.js');
 
-describe('GenerateModuleCpp', () => {
+describe('GenerateModuleH', () => {
   Object.keys(fixtures)
     .sort()
     .forEach(fixtureName => {
       const fixture = fixtures[fixtureName];
 
       it(`can generate fixture ${fixtureName}`, () => {
-        expect(generator.generate(fixtureName, fixture)).toMatchSnapshot();
+        expect(
+          generator.generate(fixtureName, fixture, 'SampleSpec'),
+        ).toMatchSnapshot();
       });
     });
 });

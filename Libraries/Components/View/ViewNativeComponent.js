@@ -10,21 +10,50 @@
 
 'use strict';
 
-const ReactNative = require('../../Renderer/shims/ReactNative');
 const Platform = require('../../Utilities/Platform');
-const registerGeneratedViewConfig = require('../../Utilities/registerGeneratedViewConfig');
 const ReactNativeViewViewConfigAndroid = require('./ReactNativeViewViewConfigAndroid');
+
+const registerGeneratedViewConfig = require('../../Utilities/registerGeneratedViewConfig');
 const requireNativeComponent = require('../../ReactNative/requireNativeComponent');
 
-import type {ViewProps} from './ViewPropTypes';
+import * as React from 'react';
 
-type ViewNativeComponentType = Class<ReactNative.NativeComponent<ViewProps>>;
+import codegenNativeCommands from '../../Utilities/codegenNativeCommands';
+import type {ViewProps} from './ViewPropTypes';
+import type {HostComponent} from '../../Renderer/shims/ReactNativeTypes';
+
+export type ViewNativeComponentType = HostComponent<ViewProps>;
 
 let NativeViewComponent;
-let viewConfig;
+let viewConfig:
+  | {...}
+  | {|
+      bubblingEventTypes?: $ReadOnly<{
+        [eventName: string]: $ReadOnly<{|
+          phasedRegistrationNames: $ReadOnly<{|
+            bubbled: string,
+            captured: string,
+          |}>,
+        |}>,
+        ...,
+      }>,
+      directEventTypes?: $ReadOnly<{
+        [eventName: string]: $ReadOnly<{|registrationName: string|}>,
+        ...,
+      }>,
+      uiViewClassName: string,
+      validAttributes?: {
+        [propName: string]:
+          | true
+          | $ReadOnly<{|
+              diff?: <T>(arg1: any, arg2: any) => boolean,
+              process?: (arg1: any) => any,
+            |}>,
+        ...,
+      },
+    |};
 
-// Only use the JS view config in DEV
-if (__DEV__) {
+if (__DEV__ || global.RN$Bridgeless) {
   // On Android, View extends the base component with additional view-only props
   // On iOS, the base component is View
   if (Platform.OS === 'android') {
@@ -41,4 +70,21 @@ if (__DEV__) {
 }
 
 export const __INTERNAL_VIEW_CONFIG = viewConfig;
+
+interface NativeCommands {
+  +hotspotUpdate: (
+    viewRef: React.ElementRef<HostComponent<mixed>>,
+    x: number,
+    y: number,
+  ) => void;
+  +setPressed: (
+    viewRef: React.ElementRef<HostComponent<mixed>>,
+    pressed: boolean,
+  ) => void;
+}
+
+export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
+  supportedCommands: ['hotspotUpdate', 'setPressed'],
+});
+
 export default ((NativeViewComponent: any): ViewNativeComponentType);

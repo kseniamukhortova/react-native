@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow
+ * @flow strict-local
  */
 
 'use strict';
@@ -17,14 +17,14 @@ import type {
 } from '../../../../../Libraries/Types/CodegenTypes';
 import type {ViewProps} from '../../../../../Libraries/Components/View/ViewPropTypes';
 import codegenNativeComponent from '../../../../../Libraries/Utilities/codegenNativeComponent';
+import type {HostComponent} from '../../../../../Libraries/Renderer/shims/ReactNativeTypes';
 
 type OnChangeEvent = $ReadOnly<{|
   location: {
-    source: {
-      url: string,
-    },
+    source: {url: string, ...},
     x: Int32,
     y: Int32,
+    ...
   },
 |}>;
 
@@ -38,6 +38,6 @@ type NativeProps = $ReadOnly<{|
   onChange?: ?BubblingEventHandler<OnChangeEvent>,
 |}>;
 
-export default codegenNativeComponent<NativeProps>(
-  'EventNestedObjectPropsNativeComponent',
-);
+export default (codegenNativeComponent<NativeProps>(
+  'EventNestedObjectPropsNativeComponentView',
+): HostComponent<NativeProps>);

@@ -16,7 +16,7 @@ import * as TurboModuleRegistry from '../TurboModule/TurboModuleRegistry';
 export type Args = {|
   title?: string,
   message?: string,
-  buttons?: Object, // TODO: have a better type
+  buttons?: Array<Object>, // TODO(T67565166): have a better type
   type?: string,
   defaultValue?: string,
   cancelButtonKey?: string,
@@ -26,9 +26,10 @@ export type Args = {|
 
 export interface Spec extends TurboModule {
   +alertWithArgs: (
+    // eslint-disable-next-line @react-native/codegen/react-native-modules
     args: Args,
     callback: (id: number, value: string) => void,
   ) => void;
 }
 
-export default TurboModuleRegistry.get<Spec>('AlertManager');
+export default (TurboModuleRegistry.get<Spec>('AlertManager'): ?Spec);

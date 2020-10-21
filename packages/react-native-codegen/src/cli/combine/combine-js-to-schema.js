@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @flow
+ * @flow strict-local
  * @format
  */
 
@@ -20,7 +20,7 @@ function combineSchemas(files: Array<string>): SchemaType {
       const contents = fs.readFileSync(filename, 'utf8');
       if (
         contents &&
-        (/export\s+default\s+codegenNativeComponent</.test(contents) ||
+        (/export\s+default\s+\(?codegenNativeComponent</.test(contents) ||
           /extends TurboModule/.test(contents))
       ) {
         const schema = FlowParser.parseFile(filename);

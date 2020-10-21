@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @flow
+ * @flow strict
  * @format
  */
 
@@ -24,4 +24,4 @@ export interface Spec extends TurboModule {
   +setSendIdleEvents: (sendIdleEvents: boolean) => void;
 }
 
-export default TurboModuleRegistry.get<Spec>('Timing');
+export default (TurboModuleRegistry.get<Spec>('Timing'): ?Spec);

@@ -12,16 +12,21 @@
 'use strict';
 
 const fixtures = require('../__test_fixtures__/fixtures.js');
-const generator = require('../GenerateModuleMm.js');
+const generator = require('../GenerateModuleObjCpp');
 
-describe('GenerateModuleHObjCpp', () => {
+describe('GenerateModuleMm', () => {
   Object.keys(fixtures)
     .sort()
     .forEach(fixtureName => {
       const fixture = fixtures[fixtureName];
 
       it(`can generate fixture ${fixtureName}`, () => {
-        expect(generator.generate(fixtureName, fixture)).toMatchSnapshot();
+        const output = generator.generate(fixtureName, fixture, 'SampleSpec');
+        expect(
+          new Map([
+            ['SampleSpec-generated.mm', output.get('SampleSpec-generated.mm')],
+          ]),
+        ).toMatchSnapshot();
       });
     });
 });

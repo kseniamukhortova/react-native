@@ -1,9 +1,10 @@
-/**
+/*
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
- * <p>This source code is licensed under the MIT license found in the LICENSE file in the root
- * directory of this source tree.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  */
+
 package com.facebook.react.modules.debug.interfaces;
 
 /** Provides access to React Native developers settings. */
@@ -25,11 +26,17 @@ public interface DeveloperSettings {
   boolean isElementInspectorEnabled();
 
   /** @return Whether Nuclide JS debugging is enabled. */
-  boolean isNuclideJSDebugEnabled();
+  boolean isDeviceDebugEnabled();
 
   /** @return Whether remote JS debugging is enabled. */
   boolean isRemoteJSDebugEnabled();
 
   /** Enable/Disable remote JS debugging. */
   void setRemoteJSDebugEnabled(boolean remoteJSDebugEnabled);
+
+  /** @return Whether Start Sampling Profiler on App Start is enabled. */
+  boolean isStartSamplingProfilerOnInit();
+
+  /** Add an item to the dev menu. */
+  void addMenuItem(String title);
 }

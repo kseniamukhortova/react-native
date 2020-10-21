@@ -10,13 +10,14 @@
 
 'use strict';
 
-const LayoutAnimation = require('../../LayoutAnimation/LayoutAnimation');
-const invariant = require('invariant');
-const NativeEventEmitter = require('../../EventEmitter/NativeEventEmitter');
-const dismissKeyboard = require('../../Utilities/dismissKeyboard');
-
+import NativeEventEmitter from '../../EventEmitter/NativeEventEmitter';
+import LayoutAnimation from '../../LayoutAnimation/LayoutAnimation';
+import dismissKeyboard from '../../Utilities/dismissKeyboard';
 import NativeKeyboardObserver from './NativeKeyboardObserver';
-const KeyboardEventEmitter = new NativeEventEmitter(NativeKeyboardObserver);
+import invariant from 'invariant';
+const KeyboardEventEmitter: NativeEventEmitter = new NativeEventEmitter(
+  NativeKeyboardObserver,
+);
 
 export type KeyboardEventName =
   | 'keyboardWillShow'
@@ -108,7 +109,7 @@ type KeyboardEventListener = (e: KeyboardEvent) => void;
  *```
  */
 
-let Keyboard = {
+const Keyboard = {
   /**
    * The `addListener` function connects a JavaScript function to an identified native
    * keyboard notification event.
@@ -175,9 +176,8 @@ let Keyboard = {
 };
 
 // Throw away the dummy object and reassign it to original module
-Keyboard = KeyboardEventEmitter;
-Keyboard.dismiss = dismissKeyboard;
-Keyboard.scheduleLayoutAnimation = function(event: KeyboardEvent) {
+KeyboardEventEmitter.dismiss = dismissKeyboard;
+KeyboardEventEmitter.scheduleLayoutAnimation = function(event: KeyboardEvent) {
   const {duration, easing} = event;
   if (duration != null && duration !== 0) {
     LayoutAnimation.configureNext({
@@ -190,4 +190,4 @@ Keyboard.scheduleLayoutAnimation = function(event: KeyboardEvent) {
   }
 };
 
-module.exports = Keyboard;
+module.exports = KeyboardEventEmitter;

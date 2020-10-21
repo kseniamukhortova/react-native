@@ -18,7 +18,11 @@ import NativeDeviceInfo, {
 } from './NativeDeviceInfo';
 import invariant from 'invariant';
 
-type DimensionsValue = {window?: DisplayMetrics, screen?: DisplayMetrics};
+type DimensionsValue = {
+  window?: DisplayMetrics,
+  screen?: DisplayMetrics,
+  ...
+};
 
 const eventEmitter = new EventEmitter();
 let dimensionsInitialized = false;
@@ -53,7 +57,7 @@ class Dimensions {
    *
    * @param {object} dims Simple string-keyed object of dimensions to set
    */
-  static set(dims: $ReadOnly<{[key: string]: any}>): void {
+  static set(dims: $ReadOnly<{[key: string]: any, ...}>): void {
     // We calculate the window dimensions in JS so that we don't encounter loss of
     // precision in transferring the dimensions (which could be non-integers) over
     // the bridge.
@@ -118,13 +122,21 @@ class Dimensions {
   }
 }
 
-// Subscribe before calling getConstants to make sure we don't miss any updates in between.
-RCTDeviceEventEmitter.addListener(
-  'didUpdateDimensions',
-  (update: DimensionsPayload) => {
-    Dimensions.set(update);
-  },
-);
-Dimensions.set(NativeDeviceInfo.getConstants().Dimensions);
+let initialDims: ?$ReadOnly<{[key: string]: any, ...}> =
+  global.nativeExtensions &&
+  global.nativeExtensions.DeviceInfo &&
+  global.nativeExtensions.DeviceInfo.Dimensions;
+if (!initialDims) {
+  // Subscribe before calling getConstants to make sure we don't miss any updates in between.
+  RCTDeviceEventEmitter.addListener(
+    'didUpdateDimensions',
+    (update: DimensionsPayload) => {
+      Dimensions.set(update);
+    },
+  );
+  initialDims = NativeDeviceInfo.getConstants().Dimensions;
+}
+
+Dimensions.set(initialDims);
 
 module.exports = Dimensions;

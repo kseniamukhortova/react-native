@@ -10,15 +10,21 @@
 
 'use strict';
 
-const React = require('react');
-const ReactNative = require('react-native');
-const {View} = ReactNative;
-const RCTDeviceEventEmitter = require('react-native/Libraries/EventEmitter/RCTDeviceEventEmitter');
-const {TestModule, AccessibilityManager} = ReactNative.NativeModules;
+import invariant from 'invariant';
+import NativeAccessibilityManager from 'react-native/Libraries/Components/AccessibilityInfo/NativeAccessibilityManager';
+import {DeviceEventEmitter, NativeModules, View} from 'react-native';
+import * as React from 'react';
 
-class AccessibilityManagerTest extends React.Component<{}> {
+const {TestModule} = NativeModules;
+
+class AccessibilityManagerTest extends React.Component<{...}> {
   componentDidMount() {
-    AccessibilityManager.setAccessibilityContentSizeMultipliers({
+    invariant(
+      NativeAccessibilityManager,
+      "NativeAccessibilityManager doesn't exist",
+    );
+
+    NativeAccessibilityManager.setAccessibilityContentSizeMultipliers({
       extraSmall: 1.0,
       small: 2.0,
       medium: 3.0,
@@ -32,7 +38,7 @@ class AccessibilityManagerTest extends React.Component<{}> {
       accessibilityExtraExtraLarge: 11.0,
       accessibilityExtraExtraExtraLarge: 12.0,
     });
-    RCTDeviceEventEmitter.addListener('didUpdateDimensions', update => {
+    DeviceEventEmitter.addListener('didUpdateDimensions', update => {
       TestModule.markTestPassed(update.window.fontScale === 4.0);
     });
   }

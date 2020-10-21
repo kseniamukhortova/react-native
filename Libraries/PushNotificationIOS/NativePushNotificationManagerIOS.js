@@ -8,8 +8,8 @@
  * @flow
  */
 
-import * as TurboModuleRegistry from '../TurboModule/TurboModuleRegistry';
 import type {TurboModule} from '../TurboModule/RCTExport';
+import * as TurboModuleRegistry from '../TurboModule/TurboModuleRegistry';
 
 type Permissions = {|
   alert: boolean,
@@ -32,7 +32,7 @@ type Notification = {|
 |};
 
 export interface Spec extends TurboModule {
-  +getConstants: () => {};
+  +getConstants: () => {||};
   +onFinishRemoteNotification: (
     notificationId: string,
     /**
@@ -46,12 +46,13 @@ export interface Spec extends TurboModule {
   +setApplicationIconBadgeNumber: (num: number) => void;
   +getApplicationIconBadgeNumber: (callback: (num: number) => void) => void;
   +requestPermissions: (permission: {|
-    +alert?: ?boolean,
-    +badge?: ?boolean,
-    +sound?: ?boolean,
+    +alert: boolean,
+    +badge: boolean,
+    +sound: boolean,
   |}) => Promise<Permissions>;
   +abandonPermissions: () => void;
   +checkPermissions: (callback: (permissions: Permissions) => void) => void;
+  // eslint-disable-next-line @react-native/codegen/react-native-modules
   +presentLocalNotification: (notification: Notification) => void;
   +scheduleLocalNotification: (notification: Notification) => void;
   +cancelAllLocalNotifications: () => void;
@@ -69,4 +70,6 @@ export interface Spec extends TurboModule {
   +removeListeners: (count: number) => void;
 }
 
-export default TurboModuleRegistry.get<Spec>('PushNotificationManager');
+export default (TurboModuleRegistry.get<Spec>(
+  'PushNotificationManager',
+): ?Spec);

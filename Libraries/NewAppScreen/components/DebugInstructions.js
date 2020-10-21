@@ -4,12 +4,13 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @flow
+ * @flow strict-local
  * @format
  */
 
-import React from 'react';
+import type {Node} from 'react';
 import {Platform, StyleSheet, Text} from 'react-native';
+import React from 'react';
 
 const styles = StyleSheet.create({
   highlight: {
@@ -17,7 +18,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const DebugInstructions = Platform.select({
+const DebugInstructions: () => Node = Platform.select({
   ios: () => (
     <Text>
       Press <Text style={styles.highlight}>Cmd + D</Text> in the simulator or{' '}
