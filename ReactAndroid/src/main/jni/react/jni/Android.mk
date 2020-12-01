@@ -69,6 +69,8 @@ $(call import-module,jsi)
 $(call import-module,jsiexecutor)
 $(call import-module,jscallinvoker)
 $(call import-module,hermes)
+$(call import-add-path, $(REACT_COMMON_DIR)/jsi)
+$(call import-module,v8runtime)
 
 include $(REACT_SRC_DIR)/turbomodule/core/jni/Android.mk
 
@@ -79,3 +81,4 @@ include $(REACT_SRC_DIR)/turbomodule/core/jni/Android.mk
 include $(REACT_SRC_DIR)/jscexecutor/Android.mk
 include $(REACT_SRC_DIR)/../hermes/reactexecutor/Android.mk
 include $(REACT_SRC_DIR)/../hermes/instrumentation/Android.mk
+include $(REACT_SRC_DIR)/../v8/reactexecutor/Android.mk

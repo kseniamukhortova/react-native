@@ -183,6 +183,23 @@ task prepareJSC {
         }
     }
 }
+task prepareV8 {
+    doLast {
+        def v8PackageRoot = file("$projectDir/../../node_modules/v8-android/dist")
+        def v8AAR = fileTree(v8PackageRoot).matching({ it.include "**/v8-android/**/*.aar" }).singleFile
+        def soFiles = zipTree(v8AAR).matching({ it.include "**/*.so" })
+        def headerFiles = fileTree(v8PackageRoot).matching({ it.include "**/include/**" })
+
+        copy {
+            from(soFiles)
+            from(headerFiles)
+            from("src/main/jni/third-party/v8/Android.mk")
+            includeEmptyDirs(false)
+            into("$thirdPartyNdkDir/v8")
+        }
+    }
+}
+
 task downloadNdkBuildDependencies {
     if (!boostPath) {
         dependsOn(downloadBoost)
@@ -253,7 +270,7 @@ def getNdkBuildFullPath() {
     return ndkBuildFullPath
 }
 
-task buildReactNdkLib(dependsOn: [prepareJSC, prepareHermes, prepareBoost, prepareDoubleConversion, prepareFolly, prepareGlog], type: Exec) {
+task buildReactNdkLib(dependsOn: [prepareJSC, prepareHermes, prepareV8, prepareBoost, prepareDoubleConversion, prepareFolly, prepareGlog], type: Exec) {
     inputs.dir("$projectDir/../ReactCommon")
     inputs.dir("src/main/jni")
     outputs.dir("$buildDir/react-ndk/all")
@@ -291,6 +308,7 @@ task packageReactNdkLibs(dependsOn: buildReactNdkLib, type: Copy) {
     into("$buildDir/react-ndk/exported")
     exclude("**/libjsc.so")
     exclude("**/libhermes.so")
+    exclude("**/libv8android.so")
 }
 
 task packageReactNdkLibsForBuck(dependsOn: packageReactNdkLibs, type: Copy) {

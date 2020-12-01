@@ -26,6 +26,7 @@ import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.packagerconnection.RequestHandler;
 import com.facebook.react.uimanager.UIImplementationProvider;
 import com.facebook.soloader.SoLoader;
+import com.facebook.v8.reactexecutor.V8ExecutorFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -285,13 +286,6 @@ public class ReactInstanceManagerBuilder {
   }
 
   private JavaScriptExecutorFactory getDefaultJSExecutorFactory(String appName, String deviceName) {
-    try {
-      // If JSC is included, use it as normal
-      SoLoader.loadLibrary("jscexecutor");
-      return new JSCExecutorFactory(appName, deviceName);
-    } catch (UnsatisfiedLinkError jscE) {
-      // Otherwise use Hermes
-      return new HermesExecutorFactory();
-    }
+    return new V8ExecutorFactory();
   }
 }
