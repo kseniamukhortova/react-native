@@ -151,6 +151,9 @@
     "ws": "^6.1.4",
     "yargs": "^9.0.0"
   },
+  "resolutions": {
+    "fsevents": "1.2.9"
+  },
   "detox": {
     "test-runner": "jest",
     "runner-config": "RNTester/e2e/config.json",
